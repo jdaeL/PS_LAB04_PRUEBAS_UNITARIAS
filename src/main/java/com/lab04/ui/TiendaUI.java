@@ -1,0 +1,367 @@
+package com.lab04.ui;
+
+import com.lab04.propuestos.ej1_inventario.Inventario;
+import com.lab04.propuestos.ej1_inventario.Producto;
+import com.lab04.propuestos.ej2_compras.CarritoCompra;
+import com.lab04.propuestos.ej2_compras.ItemCarrito;
+import com.lab04.propuestos.ej2_compras.ServicioPrecio;
+import com.lab04.propuestos.ej2_compras.ServicioPrecioReal;
+import javafx.application.Application;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+import java.util.Optional;
+
+/**
+ * Interfaz gráfica profesional que integra:
+ * - Gestión de inventario (Ejercicio 1): ver productos, agregar stock, retirar stock.
+ * - Carrito de compras (Ejercicio 2): agregar productos al carrito, actualizar cantidades,
+ *   calcular total con descuentos/impuestos, finalizar compra (descuenta stock real).
+ */
+public class TiendaUI extends Application {
+
+    private Inventario inventario;
+    private CarritoCompra carrito;
+    private ServicioPrecio servicioPrecio;
+
+    // Modelos para las tablas
+    private ObservableList<Producto> productosInventario;
+    private ObservableList<ItemCarritoView> itemsCarritoView;
+
+    // Componentes de la UI
+    private TableView<Producto> tablaInventario;
+    private TableView<ItemCarritoView> tablaCarrito;
+    private Label labelTotal;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Inicializar servicios y datos de ejemplo
+        servicioPrecio = new ServicioPrecioReal();
+        inventario = new Inventario();
+        cargarDatosEjemplo();
+
+        carrito = new CarritoCompra(servicioPrecio, inventario);
+
+        // Crear paneles
+        VBox panelInventario = crearPanelInventario();
+        VBox panelCarrito = crearPanelCarrito();
+        VBox panelAcciones = crearPanelAcciones();
+
+        // Layout principal
+        HBox mainLayout = new HBox(20, panelInventario, panelCarrito, panelAcciones);
+        mainLayout.setPadding(new Insets(15));
+        mainLayout.setStyle("-fx-background-color: #f4f4f4;");
+
+        Scene scene = new Scene(mainLayout, 1300, 700);
+        primaryStage.setTitle("Sistema Integral de Inventario y Carrito de Compras");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        actualizarTablas();
+    }
+
+    // ======================== DATOS DE EJEMPLO ========================
+    private void cargarDatosEjemplo() {
+        inventario.agregarProducto(new Producto("P001", "Laptop Gamer", 1200.0, 5));
+        inventario.agregarProducto(new Producto("P002", "Mouse Óptico", 25.0, 10));
+        inventario.agregarProducto(new Producto("P003", "Teclado Mecánico", 65.0, 3));
+        inventario.agregarProducto(new Producto("P004", "Monitor 24\"", 180.0, 2));
+        inventario.agregarProducto(new Producto("P005", "Audífonos Bluetooth", 45.0, 7));
+    }
+
+    // ======================== PANEL DE INVENTARIO ========================
+    private VBox crearPanelInventario() {
+        VBox panel = new VBox(10);
+        panel.setPadding(new Insets(10));
+        panel.setStyle("-fx-border-color: #2c3e50; -fx-border-width: 2; -fx-background-color: white;");
+        panel.setPrefWidth(400);
+
+        Label titulo = new Label("📦 GESTIÓN DE INVENTARIO");
+        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        // Tabla de inventario
+        tablaInventario = new TableView<>();
+        configurarTablaInventario();
+
+        // Botones de gestión de stock
+        Button btnAgregarStock = new Button("➕ Agregar Stock");
+        Button btnRetirarStock = new Button("➖ Retirar Stock");
+        btnAgregarStock.setOnAction(e -> gestionarStock(true));
+        btnRetirarStock.setOnAction(e -> gestionarStock(false));
+
+        HBox botonesStock = new HBox(10, btnAgregarStock, btnRetirarStock);
+        botonesStock.setPadding(new Insets(5, 0, 5, 0));
+
+        panel.getChildren().addAll(titulo, tablaInventario, botonesStock);
+        return panel;
+    }
+
+    private void configurarTablaInventario() {
+        TableColumn<Producto, String> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getId()));
+
+        TableColumn<Producto, String> colNombre = new TableColumn<>("Producto");
+        colNombre.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNombre()));
+
+        TableColumn<Producto, Double> colPrecio = new TableColumn<>("Precio");
+        colPrecio.setCellValueFactory(cell -> new SimpleDoubleProperty(cell.getValue().getPrecio()).asObject());
+        colPrecio.setStyle("-fx-alignment: CENTER-RIGHT;");
+
+        TableColumn<Producto, Integer> colStock = new TableColumn<>("Stock");
+        colStock.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getStock()).asObject());
+        colStock.setStyle("-fx-alignment: CENTER;");
+
+        tablaInventario.getColumns().addAll(colId, colNombre, colPrecio, colStock);
+        productosInventario = FXCollections.observableArrayList();
+        tablaInventario.setItems(productosInventario);
+    }
+
+    private void gestionarStock(boolean esAgregar) {
+        Producto seleccionado = tablaInventario.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
+            mostrarAlerta("Debe seleccionar un producto.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog("1");
+        dialog.setTitle(esAgregar ? "Agregar Stock" : "Retirar Stock");
+        dialog.setHeaderText(esAgregar ? "Ingrese la cantidad a agregar:" : "Ingrese la cantidad a retirar:");
+        dialog.setContentText("Cantidad:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(cantStr -> {
+            try {
+                int cantidad = Integer.parseInt(cantStr);
+                if (esAgregar) {
+                    inventario.entradaStock(seleccionado.getId(), cantidad, "Ajuste manual UI");
+                    mostrarAlerta("Stock agregado correctamente.", Alert.AlertType.INFORMATION);
+                } else {
+                    inventario.salidaStock(seleccionado.getId(), cantidad, "Retiro manual UI");
+                    mostrarAlerta("Stock retirado correctamente.", Alert.AlertType.INFORMATION);
+                }
+                actualizarTablas();
+            } catch (NumberFormatException e) {
+                mostrarAlerta("Cantidad inválida.", Alert.AlertType.ERROR);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
+    }
+
+    // ======================== PANEL DEL CARRITO ========================
+    private VBox crearPanelCarrito() {
+        VBox panel = new VBox(10);
+        panel.setPadding(new Insets(10));
+        panel.setStyle("-fx-border-color: #16a085; -fx-border-width: 2; -fx-background-color: white;");
+        panel.setPrefWidth(500);
+
+        Label titulo = new Label("🛒 CARRITO DE COMPRAS");
+        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #16a085;");
+
+        // Tabla del carrito
+        tablaCarrito = new TableView<>();
+        configurarTablaCarrito();
+
+        // Botones de acciones del carrito
+        Button btnAgregarAlCarrito = new Button("➕ Agregar al carrito");
+        Button btnActualizarCantidad = new Button("✏️ Actualizar cantidad");
+        Button btnRemover = new Button("❌ Remover producto");
+        Button btnVaciar = new Button("🗑️ Vaciar carrito");
+
+        btnAgregarAlCarrito.setOnAction(e -> agregarAlCarrito());
+        btnActualizarCantidad.setOnAction(e -> actualizarCantidadCarrito());
+        btnRemover.setOnAction(e -> removerDelCarrito());
+        btnVaciar.setOnAction(e -> vaciarCarrito());
+
+        HBox botonesCarrito = new HBox(10, btnAgregarAlCarrito, btnActualizarCantidad, btnRemover, btnVaciar);
+        botonesCarrito.setPadding(new Insets(5, 0, 5, 0));
+
+        panel.getChildren().addAll(titulo, tablaCarrito, botonesCarrito);
+        return panel;
+    }
+
+    private void configurarTablaCarrito() {
+        TableColumn<ItemCarritoView, String> colProd = new TableColumn<>("Producto");
+        colProd.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getProducto().getNombre()));
+
+        TableColumn<ItemCarritoView, Integer> colCant = new TableColumn<>("Cantidad");
+        colCant.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getCantidad()).asObject());
+
+        TableColumn<ItemCarritoView, Double> colSub = new TableColumn<>("Subtotal");
+        colSub.setCellValueFactory(cell -> new SimpleDoubleProperty(cell.getValue().getSubtotal()).asObject());
+        colSub.setStyle("-fx-alignment: CENTER-RIGHT;");
+
+        tablaCarrito.getColumns().addAll(colProd, colCant, colSub);
+        itemsCarritoView = FXCollections.observableArrayList();
+        tablaCarrito.setItems(itemsCarritoView);
+    }
+
+    private void agregarAlCarrito() {
+        Producto seleccionado = tablaInventario.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
+            mostrarAlerta("Seleccione un producto del inventario.", Alert.AlertType.WARNING);
+            return;
+        }
+        if (seleccionado.getStock() <= 0) {
+            mostrarAlerta("El producto no tiene stock disponible.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog("1");
+        dialog.setTitle("Agregar al carrito");
+        dialog.setHeaderText("Cantidad de " + seleccionado.getNombre() + " (máx. " + seleccionado.getStock() + ")");
+        dialog.setContentText("Cantidad:");
+
+        dialog.showAndWait().ifPresent(cantStr -> {
+            try {
+                int cantidad = Integer.parseInt(cantStr);
+                carrito.agregarProducto(seleccionado, cantidad);
+                actualizarTablas();
+                mostrarAlerta("Producto agregado al carrito.", Alert.AlertType.INFORMATION);
+            } catch (NumberFormatException e) {
+                mostrarAlerta("Cantidad inválida.", Alert.AlertType.ERROR);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
+    }
+
+    private void actualizarCantidadCarrito() {
+        ItemCarritoView seleccionado = tablaCarrito.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
+            mostrarAlerta("Seleccione un producto del carrito.", Alert.AlertType.WARNING);
+            return;
+        }
+        Producto producto = seleccionado.getProducto();
+        int stockDisponible = producto.getStock();
+
+        TextInputDialog dialog = new TextInputDialog(String.valueOf(seleccionado.getCantidad()));
+        dialog.setTitle("Actualizar cantidad");
+        dialog.setHeaderText("Nueva cantidad para " + producto.getNombre() + " (máx. " + stockDisponible + ")");
+        dialog.setContentText("Cantidad:");
+
+        dialog.showAndWait().ifPresent(cantStr -> {
+            try {
+                int nueva = Integer.parseInt(cantStr);
+                carrito.actualizarCantidad(producto, nueva);
+                actualizarTablas();
+            } catch (Exception e) {
+                mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
+    }
+
+    private void removerDelCarrito() {
+        ItemCarritoView seleccionado = tablaCarrito.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
+            mostrarAlerta("Seleccione un producto del carrito.", Alert.AlertType.WARNING);
+            return;
+        }
+        carrito.removerProducto(seleccionado.getProducto());
+        actualizarTablas();
+    }
+
+    private void vaciarCarrito() {
+        carrito.vaciarCarrito();
+        actualizarTablas();
+    }
+
+    // ======================== PANEL DE TOTALES Y FINALIZAR ========================
+    private VBox crearPanelAcciones() {
+        VBox panel = new VBox(15);
+        panel.setPadding(new Insets(10));
+        panel.setStyle("-fx-border-color: #e67e22; -fx-border-width: 2; -fx-background-color: white;");
+        panel.setPrefWidth(250);
+
+        Label titulo = new Label("💰 TOTAL Y PAGO");
+        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;");
+
+        labelTotal = new Label("$ 0.00");
+        labelTotal.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+
+        Button btnCalcularTotal = new Button("🧮 Calcular total");
+        Button btnFinalizarCompra = new Button("✅ Finalizar compra");
+
+        btnCalcularTotal.setOnAction(e -> actualizarTotal());
+        btnFinalizarCompra.setOnAction(e -> finalizarCompra());
+
+        VBox.setMargin(labelTotal, new Insets(10, 0, 10, 0));
+        panel.getChildren().addAll(titulo, labelTotal, btnCalcularTotal, btnFinalizarCompra);
+        return panel;
+    }
+
+    private void actualizarTotal() {
+        try {
+            double total = carrito.calcularTotal();
+            labelTotal.setText(String.format("$ %.2f", total));
+        } catch (Exception e) {
+            mostrarAlerta("Error al calcular total: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    private void finalizarCompra() {
+        try {
+            carrito.finalizarCompra();
+            mostrarAlerta("Compra finalizada con éxito. El stock ha sido actualizado.", Alert.AlertType.INFORMATION);
+            actualizarTablas(); // refresca inventario y carrito
+            labelTotal.setText("$ 0.00");
+        } catch (IllegalStateException e) {
+            mostrarAlerta("No se pudo finalizar: " + e.getMessage(), Alert.AlertType.ERROR);
+        } catch (Exception e) {
+            mostrarAlerta("Error inesperado: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    // ======================== MÉTODOS AUXILIARES ========================
+    private void actualizarTablas() {
+        // Actualizar inventario
+        productosInventario.clear();
+        productosInventario.addAll(inventario.listarProductos());
+
+        // Actualizar vista del carrito
+        itemsCarritoView.clear();
+        for (ItemCarrito item : carrito.getItems()) {
+            itemsCarritoView.add(new ItemCarritoView(item.getProducto(), item.getCantidad(), item.getSubtotal()));
+        }
+
+        // Refrescar total
+        actualizarTotal();
+    }
+
+    private void mostrarAlerta(String mensaje, Alert.AlertType tipo) {
+        Alert alert = new Alert(tipo);
+        alert.setTitle(tipo == Alert.AlertType.ERROR ? "Error" : "Información");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    // Clase auxiliar para mostrar datos del carrito en la tabla
+    public static class ItemCarritoView {
+        private final Producto producto;
+        private final int cantidad;
+        private final double subtotal;
+
+        public ItemCarritoView(Producto producto, int cantidad, double subtotal) {
+            this.producto = producto;
+            this.cantidad = cantidad;
+            this.subtotal = subtotal;
+        }
+
+        public Producto getProducto() { return producto; }
+        public int getCantidad() { return cantidad; }
+        public double getSubtotal() { return subtotal; }
+    }
+}
