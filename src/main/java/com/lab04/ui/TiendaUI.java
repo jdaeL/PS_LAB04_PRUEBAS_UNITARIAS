@@ -12,6 +12,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -34,11 +36,19 @@ public class TiendaUI extends Application {
 
     // Modelos para las tablas
     private ObservableList<Producto> productosInventario;
+    private FilteredList<Producto> productosFiltrados;
     private ObservableList<ItemCarritoView> itemsCarritoView;
 
     // Componentes de la UI
     private TableView<Producto> tablaInventario;
     private TableView<ItemCarritoView> tablaCarrito;
+    private TextField filtroInventario;
+    private ListView<String> listaHistorial;
+    private Button btnCalcularTotal;
+    private Button btnFinalizarCompra;
+    private Label labelSubtotal;
+    private Label labelDescuento;
+    private Label labelImpuesto;
     private Label labelTotal;
 
     public static void main(String[] args) {
@@ -91,6 +101,14 @@ public class TiendaUI extends Application {
         Label titulo = new Label("📦 GESTIÓN DE INVENTARIO");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
 
+        HBox buscador = new HBox(10);
+        Label labelBuscar = new Label("Buscar:");
+        filtroInventario = new TextField();
+        filtroInventario.setPromptText("ID o nombre...");
+        HBox.setHgrow(filtroInventario, Priority.ALWAYS);
+        filtroInventario.textProperty().addListener((obs, oldVal, newVal) -> aplicarFiltroInventario(newVal));
+        buscador.getChildren().addAll(labelBuscar, filtroInventario);
+
         // Tabla de inventario
         tablaInventario = new TableView<>();
         configurarTablaInventario();
@@ -104,7 +122,7 @@ public class TiendaUI extends Application {
         HBox botonesStock = new HBox(10, btnAgregarStock, btnRetirarStock);
         botonesStock.setPadding(new Insets(5, 0, 5, 0));
 
-        panel.getChildren().addAll(titulo, tablaInventario, botonesStock);
+        panel.getChildren().addAll(titulo, buscador, tablaInventario, botonesStock);
         return panel;
     }
 
@@ -125,7 +143,11 @@ public class TiendaUI extends Application {
 
         tablaInventario.getColumns().addAll(colId, colNombre, colPrecio, colStock);
         productosInventario = FXCollections.observableArrayList();
-        tablaInventario.setItems(productosInventario);
+        productosFiltrados = new FilteredList<>(productosInventario, p -> true);
+        SortedList<Producto> productosOrdenados = new SortedList<>(productosFiltrados);
+        productosOrdenados.comparatorProperty().bind(tablaInventario.comparatorProperty());
+        tablaInventario.setItems(productosOrdenados);
+        tablaInventario.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
     }
 
     private void gestionarStock(boolean esAgregar) {
@@ -206,6 +228,7 @@ public class TiendaUI extends Application {
         tablaCarrito.getColumns().addAll(colProd, colCant, colSub);
         itemsCarritoView = FXCollections.observableArrayList();
         tablaCarrito.setItems(itemsCarritoView);
+        tablaCarrito.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
     }
 
     private void agregarAlCarrito() {
@@ -289,24 +312,42 @@ public class TiendaUI extends Application {
         Label titulo = new Label("💰 TOTAL Y PAGO");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;");
 
+        labelSubtotal = new Label("$ 0.00");
+        labelDescuento = new Label("$ 0.00");
+        labelImpuesto = new Label("$ 0.00");
         labelTotal = new Label("$ 0.00");
-        labelTotal.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+        labelTotal.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
 
-        Button btnCalcularTotal = new Button("🧮 Calcular total");
-        Button btnFinalizarCompra = new Button("✅ Finalizar compra");
+        GridPane resumen = new GridPane();
+        resumen.setHgap(10);
+        resumen.setVgap(8);
+        resumen.addRow(0, new Label("Subtotal:"), labelSubtotal);
+        resumen.addRow(1, new Label("Descuento:"), labelDescuento);
+        resumen.addRow(2, new Label("Impuesto:"), labelImpuesto);
+        resumen.addRow(3, new Label("Total:"), labelTotal);
+
+        btnCalcularTotal = new Button("🧮 Calcular total");
+        btnFinalizarCompra = new Button("✅ Finalizar compra");
 
         btnCalcularTotal.setOnAction(e -> actualizarTotal());
         btnFinalizarCompra.setOnAction(e -> finalizarCompra());
 
-        VBox.setMargin(labelTotal, new Insets(10, 0, 10, 0));
-        panel.getChildren().addAll(titulo, labelTotal, btnCalcularTotal, btnFinalizarCompra);
+        Label tituloHistorial = new Label("📋 Historial del carrito");
+        tituloHistorial.setStyle("-fx-font-weight: bold;");
+        listaHistorial = new ListView<>();
+        listaHistorial.setPrefHeight(220);
+        listaHistorial.setPlaceholder(new Label("Sin operaciones"));
+        VBox.setVgrow(listaHistorial, Priority.ALWAYS);
+
+        panel.getChildren().addAll(titulo, resumen, btnCalcularTotal, btnFinalizarCompra, new Separator(),
+                tituloHistorial, listaHistorial);
         return panel;
     }
 
     private void actualizarTotal() {
         try {
-            double total = carrito.calcularTotal();
-            labelTotal.setText(String.format("$ %.2f", total));
+            carrito.calcularTotal();
+            actualizarTotalesUI();
         } catch (Exception e) {
             mostrarAlerta("Error al calcular total: " + e.getMessage(), Alert.AlertType.ERROR);
         }
@@ -317,7 +358,6 @@ public class TiendaUI extends Application {
             carrito.finalizarCompra();
             mostrarAlerta("Compra finalizada con éxito. El stock ha sido actualizado.", Alert.AlertType.INFORMATION);
             actualizarTablas(); // refresca inventario y carrito
-            labelTotal.setText("$ 0.00");
         } catch (IllegalStateException e) {
             mostrarAlerta("No se pudo finalizar: " + e.getMessage(), Alert.AlertType.ERROR);
         } catch (Exception e) {
@@ -328,17 +368,16 @@ public class TiendaUI extends Application {
     // ======================== MÉTODOS AUXILIARES ========================
     private void actualizarTablas() {
         // Actualizar inventario
-        productosInventario.clear();
-        productosInventario.addAll(inventario.listarProductos());
+        productosInventario.setAll(inventario.listarProductos());
 
         // Actualizar vista del carrito
-        itemsCarritoView.clear();
-        for (ItemCarrito item : carrito.getItems()) {
-            itemsCarritoView.add(new ItemCarritoView(item.getProducto(), item.getCantidad(), item.getSubtotal()));
-        }
+        itemsCarritoView.setAll(carrito.getItems().stream()
+                .map(item -> new ItemCarritoView(item.getProducto(), item.getCantidad(), item.getSubtotal()))
+                .toList());
 
-        // Refrescar total
-        actualizarTotal();
+        actualizarHistorial();
+        actualizarTotalesUI();
+        actualizarEstadoAcciones();
     }
 
     private void mostrarAlerta(String mensaje, Alert.AlertType tipo) {
@@ -357,6 +396,45 @@ public class TiendaUI extends Application {
                 inventarioProducto.isDisponible());
     }
 
+    private void aplicarFiltroInventario(String filtro) {
+        String texto = filtro == null ? "" : filtro.trim().toLowerCase();
+        productosFiltrados.setPredicate(producto -> {
+            if (texto.isEmpty()) return true;
+            return producto.getId().toLowerCase().contains(texto)
+                    || producto.getNombre().toLowerCase().contains(texto);
+        });
+    }
+
+    private void actualizarHistorial() {
+        listaHistorial.getItems().setAll(carrito.getHistorialOperaciones());
+        if (!listaHistorial.getItems().isEmpty()) {
+            listaHistorial.scrollTo(listaHistorial.getItems().size() - 1);
+        }
+    }
+
+    private void actualizarTotalesUI() {
+        Totales totales = calcularTotales();
+        labelSubtotal.setText(String.format("$ %.2f", totales.subtotal));
+        labelDescuento.setText(String.format("$ %.2f", totales.descuento));
+        labelImpuesto.setText(String.format("$ %.2f", totales.impuesto));
+        labelTotal.setText(String.format("$ %.2f", totales.total));
+    }
+
+    private Totales calcularTotales() {
+        double subtotal = carrito.getItems().stream().mapToDouble(ItemCarrito::getSubtotal).sum();
+        double descuento = servicioPrecio.calcularDescuento(subtotal);
+        double conDescuento = subtotal - descuento;
+        double impuesto = servicioPrecio.calcularImpuesto(conDescuento);
+        double total = conDescuento + impuesto;
+        return new Totales(subtotal, descuento, impuesto, total);
+    }
+
+    private void actualizarEstadoAcciones() {
+        boolean carritoVacio = carrito.getItems().isEmpty();
+        btnCalcularTotal.setDisable(carritoVacio);
+        btnFinalizarCompra.setDisable(carritoVacio);
+    }
+
     // Clase auxiliar para mostrar datos del carrito en la tabla
     public static class ItemCarritoView {
         private final com.lab04.propuestos.ej2_compras.Producto producto;
@@ -372,5 +450,19 @@ public class TiendaUI extends Application {
         public com.lab04.propuestos.ej2_compras.Producto getProducto() { return producto; }
         public int getCantidad() { return cantidad; }
         public double getSubtotal() { return subtotal; }
+    }
+
+    private static class Totales {
+        private final double subtotal;
+        private final double descuento;
+        private final double impuesto;
+        private final double total;
+
+        private Totales(double subtotal, double descuento, double impuesto, double total) {
+            this.subtotal = subtotal;
+            this.descuento = descuento;
+            this.impuesto = impuesto;
+            this.total = total;
+        }
     }
 }
