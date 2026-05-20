@@ -227,7 +227,8 @@ public class TiendaUI extends Application {
         dialog.showAndWait().ifPresent(cantStr -> {
             try {
                 int cantidad = Integer.parseInt(cantStr);
-                carrito.agregarProducto(seleccionado, cantidad);
+                com.lab04.propuestos.ej2_compras.Producto productoCarrito = crearProductoCarrito(seleccionado);
+                carrito.agregarProducto(productoCarrito, cantidad);
                 actualizarTablas();
                 mostrarAlerta("Producto agregado al carrito.", Alert.AlertType.INFORMATION);
             } catch (NumberFormatException e) {
@@ -244,8 +245,8 @@ public class TiendaUI extends Application {
             mostrarAlerta("Seleccione un producto del carrito.", Alert.AlertType.WARNING);
             return;
         }
-        Producto producto = seleccionado.getProducto();
-        int stockDisponible = producto.getStock();
+        com.lab04.propuestos.ej2_compras.Producto producto = seleccionado.getProducto();
+        int stockDisponible = inventario.consultarStock(producto.getId());
 
         TextInputDialog dialog = new TextInputDialog(String.valueOf(seleccionado.getCantidad()));
         dialog.setTitle("Actualizar cantidad");
@@ -348,19 +349,27 @@ public class TiendaUI extends Application {
         alert.showAndWait();
     }
 
+    private com.lab04.propuestos.ej2_compras.Producto crearProductoCarrito(Producto inventarioProducto) {
+        return new com.lab04.propuestos.ej2_compras.Producto(
+                inventarioProducto.getId(),
+                inventarioProducto.getNombre(),
+                inventarioProducto.getPrecio(),
+                inventarioProducto.isDisponible());
+    }
+
     // Clase auxiliar para mostrar datos del carrito en la tabla
     public static class ItemCarritoView {
-        private final Producto producto;
+        private final com.lab04.propuestos.ej2_compras.Producto producto;
         private final int cantidad;
         private final double subtotal;
 
-        public ItemCarritoView(Producto producto, int cantidad, double subtotal) {
+        public ItemCarritoView(com.lab04.propuestos.ej2_compras.Producto producto, int cantidad, double subtotal) {
             this.producto = producto;
             this.cantidad = cantidad;
             this.subtotal = subtotal;
         }
 
-        public Producto getProducto() { return producto; }
+        public com.lab04.propuestos.ej2_compras.Producto getProducto() { return producto; }
         public int getCantidad() { return cantidad; }
         public double getSubtotal() { return subtotal; }
     }

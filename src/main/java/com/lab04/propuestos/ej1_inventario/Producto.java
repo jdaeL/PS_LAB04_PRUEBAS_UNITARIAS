@@ -3,31 +3,33 @@ package com.lab04.propuestos.ej1_inventario;
 import java.util.Objects;
 
 public class Producto {
-    private final String id;
+    private final String codigo;
     private final String nombre;
     private final double precio;
     private int stock;  // cantidad disponible en inventario
 
-    public Producto(String id, String nombre, double precio, int stockInicial) {
-        if (id == null || id.isBlank())
-            throw new IllegalArgumentException("ID no puede estar vacío");
+    public Producto(String codigo, String nombre, double precio, int stockInicial) {
+        if (codigo == null || codigo.isBlank())
+            throw new IllegalArgumentException("Código no puede estar vacío");
         if (nombre == null || nombre.isBlank())
             throw new IllegalArgumentException("Nombre no puede estar vacío");
         if (precio <= 0)
             throw new IllegalArgumentException("El precio debe ser positivo");
         if (stockInicial < 0)
             throw new IllegalArgumentException("El stock inicial no puede ser negativo");
-        this.id = id;
+        this.codigo = codigo;
         this.nombre = nombre;
         this.precio = precio;
         this.stock = stockInicial;
     }
 
     // Getters
-    public String getId() { return id; }
+    public String getCodigo() { return codigo; }
+    public String getId() { return codigo; }
     public String getNombre() { return nombre; }
     public double getPrecio() { return precio; }
     public int getStock() { return stock; }
+    public int getCantidad() { return stock; }
 
     // Métodos de gestión de stock (Ejercicio 1)
     public void agregarStock(int cantidad) {
@@ -61,16 +63,16 @@ public class Producto {
         if (this == o) return true;
         if (!(o instanceof Producto)) return false;
         Producto producto = (Producto) o;
-        return id.equals(producto.id);
+        return codigo.equals(producto.codigo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(codigo);
     }
 
     @Override
     public String toString() {
-        return String.format("%s (%s) - $%.2f - Stock: %d", nombre, id, precio, stock);
+        return String.format("%s (%s) - $%.2f - Stock: %d", nombre, codigo, precio, stock);
     }
 }

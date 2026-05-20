@@ -1,7 +1,5 @@
 package com.lab04.propuestos.ej2_compras;
 
-import com.lab04.propuestos.ej1_inventario.Producto;
-
 public class ItemCarrito {
     private final Producto producto;
     private int cantidad;

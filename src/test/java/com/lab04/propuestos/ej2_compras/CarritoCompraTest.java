@@ -5,12 +5,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -20,13 +22,26 @@ import static org.mockito.Mockito.when;
 class CarritoCompraTest {
 
     private ServicioPrecio servicioPrecioMock;
+    private ServicioPrecio servicioPrecioSinImpuestos;
+    private ServicioPrecioReal servicioPrecioReal;
     private CarritoCompra carrito;
     private Producto producto1, producto2, productoSinStock;
 
     @BeforeEach
-    void setUp() {
+    void setUpBase() {
         servicioPrecioMock = mock(ServicioPrecio.class);
-        carrito = new CarritoCompra(servicioPrecioMock);
+        servicioPrecioSinImpuestos = new ServicioPrecio() {
+            @Override
+            public double calcularDescuento(double total) {
+                return 0;
+            }
+
+            @Override
+            public double calcularImpuesto(double total) {
+                return 0;
+            }
+        };
+        servicioPrecioReal = new ServicioPrecioReal();
         producto1 = new Producto("P001", "Laptop", 1000.0, true);
         producto2 = new Producto("P002", "Mouse", 25.0, true);
         productoSinStock = new Producto("P003", "Teclado", 50.0, false);
@@ -35,6 +50,11 @@ class CarritoCompraTest {
     @Nested
     @DisplayName("Operaciones básicas del carrito (sin mocks)")
     class OperacionesBasicas {
+
+        @BeforeEach
+        void setUpCarrito() {
+            carrito = new CarritoCompra(servicioPrecioSinImpuestos);
+        }
 
         @Test
         @DisplayName("Agregar producto aumenta la lista de items")
@@ -112,8 +132,6 @@ class CarritoCompraTest {
         @DisplayName("Obtener resumen del carrito (formato esperado)")
         void obtenerResumenCompra_NoNulo() {
             carrito.agregarProducto(producto1, 2); // subtotal 2000
-            when(servicioPrecioMock.calcularDescuento(2000)).thenReturn(0.0);
-            when(servicioPrecioMock.calcularImpuesto(2000)).thenReturn(0.0);
             String resumen = carrito.obtenerResumenCompra();
             assertTrue(resumen.contains("Laptop x2 = 2000.00"));
             assertTrue(resumen.contains("TOTAL: 2000.00"));
@@ -135,6 +153,11 @@ class CarritoCompraTest {
     @Nested
     @DisplayName("Cálculos de total con Mock de ServicioPrecio")
     class CalculosConMock {
+
+        @BeforeEach
+        void setUpCarrito() {
+            carrito = new CarritoCompra(servicioPrecioMock);
+        }
 
         @Test
         @DisplayName("Carrito vacío total = 0")
@@ -212,12 +235,15 @@ class CarritoCompraTest {
     @DisplayName("Casos límite")
     class CasosLimite {
 
+        @BeforeEach
+        void setUpCarrito() {
+            carrito = new CarritoCompra(servicioPrecioSinImpuestos);
+        }
+
         @Test
         @DisplayName("Carrito con 1 producto")
         void unSoloProducto() {
             carrito.agregarProducto(producto1, 1);
-            when(servicioPrecioMock.calcularDescuento(1000)).thenReturn(0.0);
-            when(servicioPrecioMock.calcularImpuesto(1000)).thenReturn(0.0);
             assertEquals(1000.0, carrito.calcularTotal());
             assertEquals(1, carrito.getItems().size());
         }
@@ -229,8 +255,6 @@ class CarritoCompraTest {
                 Producto p = new Producto("P" + i, "Producto" + i, 0.50, true);
                 carrito.agregarProducto(p, 1);
             }
-            when(servicioPrecioMock.calcularDescuento(50.0)).thenReturn(0.0);
-            when(servicioPrecioMock.calcularImpuesto(50.0)).thenReturn(0.0);
             assertEquals(50.0, carrito.calcularTotal());
             assertEquals(100, carrito.getItems().size());
         }
@@ -239,8 +263,6 @@ class CarritoCompraTest {
         @DisplayName("Cantidad máxima en un solo ítem")
         void cantidadMuyGrande() {
             carrito.agregarProducto(producto1, 1000);
-            when(servicioPrecioMock.calcularDescuento(1_000_000)).thenReturn(0.0);
-            when(servicioPrecioMock.calcularImpuesto(1_000_000)).thenReturn(0.0);
             assertEquals(1_000_000.0, carrito.calcularTotal());
             assertEquals(1000, carrito.getItems().get(0).getCantidad());
         }
@@ -252,6 +274,23 @@ class CarritoCompraTest {
             carrito.agregarProducto(producto1, 2); // ahora 3
             carrito.actualizarCantidad(producto1, 10);
             assertEquals(10, carrito.getItems().get(0).getCantidad());
+        }
+    }
+
+    @Nested
+    @DisplayName("ServicioPrecioReal")
+    class ServicioPrecioRealTests {
+
+        @Test
+        @DisplayName("Descuento aplica 10% si total es mayor a 500")
+        void descuento_SeAplicaSobreTotalMayorA500() {
+            assertEquals(100.0, servicioPrecioReal.calcularDescuento(1000.0));
+        }
+
+        @Test
+        @DisplayName("Impuesto aplica 19% sobre el total")
+        void impuesto_SeCalculaSobreTotal() {
+            assertEquals(19.0, servicioPrecioReal.calcularImpuesto(100.0));
         }
     }
 }

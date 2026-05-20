@@ -10,10 +10,15 @@ public class Inventario {
 
     // Agregar un nuevo producto (stock inicial se asigna en el constructor)
     public void agregarProducto(Producto producto) {
+        if (producto == null) {
+            throw new IllegalArgumentException("Producto no puede ser nulo");
+        }
         if (productos.containsKey(producto.getId()))
             throw new IllegalArgumentException("Ya existe un producto con ID: " + producto.getId());
         productos.put(producto.getId(), producto);
-        registrarMovimiento(Movimiento.Tipo.ENTRADA, producto.getStock(), producto.getId(), "Alta inicial");
+        if (producto.getStock() > 0) {
+            registrarMovimiento(Movimiento.Tipo.ENTRADA, producto.getStock(), producto.getId(), "Alta inicial");
+        }
     }
 
     // Aumentar stock de un producto existente (entrada)

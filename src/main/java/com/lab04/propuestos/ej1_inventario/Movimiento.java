@@ -11,6 +11,15 @@ public class Movimiento {
     private final String motivo;  // opcional, ej: "compra", "venta", "ajuste"
 
     public Movimiento(Tipo tipo, int cantidad, String productoId, String motivo) {
+        if (tipo == null) {
+            throw new IllegalArgumentException("Tipo de movimiento no puede ser nulo");
+        }
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser positiva");
+        }
+        if (productoId == null || productoId.isBlank()) {
+            throw new IllegalArgumentException("ProductoId no puede estar vacío");
+        }
         this.tipo = tipo;
         this.cantidad = cantidad;
         this.productoId = productoId;
