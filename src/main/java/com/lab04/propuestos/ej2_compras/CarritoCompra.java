@@ -1,35 +1,46 @@
 package com.lab04.propuestos.ej2_compras;
 
+import com.lab04.propuestos.ej1_inventario.Inventario;
+import com.lab04.propuestos.ej1_inventario.Producto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class CarritoCompra {
+    private static final Logger log = LoggerFactory.getLogger(CarritoCompra.class);
+
     private final List<ItemCarrito> items;
     private final ServicioPrecio servicioPrecio;
+    private final Inventario inventario;  // referencia al inventario real
     private final List<String> historialOperaciones;
 
-    public CarritoCompra(ServicioPrecio servicioPrecio) {
-        this.servicioPrecio = Objects.requireNonNull(servicioPrecio, "ServicioPrecio no puede ser nulo");
+    public CarritoCompra(ServicioPrecio servicioPrecio, Inventario inventario) {
+        this.servicioPrecio = Objects.requireNonNull(servicioPrecio);
+        this.inventario = Objects.requireNonNull(inventario);
         this.items = new ArrayList<>();
         this.historialOperaciones = new ArrayList<>();
         registrarOperacion("Carrito creado");
+        log.info("CarritoCompra inicializado con inventario");
     }
 
     public void agregarProducto(Producto producto, int cantidad) {
         if (producto == null)
             throw new IllegalArgumentException("Producto no puede ser nulo");
-        if (!producto.isDisponible())
-            throw new IllegalStateException("Producto no disponible: " + producto.getNombre());
         if (cantidad <= 0)
             throw new IllegalArgumentException("La cantidad debe ser positiva");
+
+        // Verificar stock real en inventario
+        if (!inventario.verificarStock(producto.getId(), cantidad)) {
+            throw new IllegalStateException("Stock insuficiente para " + producto.getNombre() +
+                    ". Disponible: " + inventario.consultarStock(producto.getId()));
+        }
 
         Optional<ItemCarrito> existente = buscarItem(producto);
         if (existente.isPresent()) {
             ItemCarrito item = existente.get();
+            // No se puede superar el stock sumando cantidades, pero lo validamos al finalizar
             item.setCantidad(item.getCantidad() + cantidad);
             registrarOperacion(String.format("Cantidad aumentada: %s +%d (nueva: %d)",
                     producto.getNombre(), cantidad, item.getCantidad()));
@@ -37,6 +48,7 @@ public class CarritoCompra {
             items.add(new ItemCarrito(producto, cantidad));
             registrarOperacion(String.format("Producto agregado: %s x%d", producto.getNombre(), cantidad));
         }
+        log.debug("Producto agregado al carrito: {} x{}", producto.getNombre(), cantidad);
     }
 
     public void actualizarCantidad(Producto producto, int nuevaCantidad) {
@@ -47,6 +59,11 @@ public class CarritoCompra {
         ItemCarrito item = buscarItem(producto)
                 .orElseThrow(() -> new IllegalArgumentException("Producto no está en el carrito"));
         int viejaCantidad = item.getCantidad();
+        // Validar que el nuevo total no exceda el stock
+        if (!inventario.verificarStock(producto.getId(), nuevaCantidad)) {
+            throw new IllegalStateException("Stock insuficiente para " + producto.getNombre() +
+                    ". Disponible: " + inventario.consultarStock(producto.getId()));
+        }
         item.setCantidad(nuevaCantidad);
         registrarOperacion(String.format("Cantidad actualizada: %s %d -> %d",
                 producto.getNombre(), viejaCantidad, nuevaCantidad));
@@ -89,6 +106,20 @@ public class CarritoCompra {
         double total = calcularTotal();
         sb.append(String.format("TOTAL: %.2f", total));
         return sb.toString();
+    }
+
+    // Finalizar compra: descuenta el stock real del inventario
+    public void finalizarCompra() {
+        if (items.isEmpty()) {
+            throw new IllegalStateException("No hay productos en el carrito");
+        }
+        for (ItemCarrito item : items) {
+            inventario.salidaStock(item.getProducto().getId(), item.getCantidad(), "Venta por carrito");
+            log.info("Stock descontado: {} -{}", item.getProducto().getNombre(), item.getCantidad());
+        }
+        registrarOperacion("Compra finalizada. Stock actualizado.");
+        vaciarCarrito(); // opcional
+        log.info("Compra finalizada exitosamente");
     }
 
     public List<String> getHistorialOperaciones() {
