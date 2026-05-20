@@ -1,7 +1,11 @@
-package pe.com.lab04;
+package com.lab04.propuestos.ej2_compras;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class CarritoCompra {
     private final List<ItemCarrito> items;

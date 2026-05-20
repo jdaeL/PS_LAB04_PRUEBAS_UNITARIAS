@@ -1,4 +1,4 @@
-package pe.com.lab04;
+package com.lab04.propuestos.ej2_compras;
 
 public interface ServicioPrecio {
     double calcularDescuento(double total);
