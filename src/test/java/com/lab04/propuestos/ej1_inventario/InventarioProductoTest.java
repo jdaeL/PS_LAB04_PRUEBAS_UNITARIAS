@@ -149,6 +149,41 @@ class InventarioProductoTest {
             assertTrue(producto.toString().contains("Producto Base"));
             assertTrue(producto.toString().contains("P001"));
         }
+
+        @Test
+        @DisplayName("Getters retornan los valores esperados")
+        void getters_RetornanValores() {
+            assertEquals("P001", producto.getCodigo());
+            assertEquals("P001", producto.getId());
+            assertEquals("Producto Base", producto.getNombre());
+            assertEquals(10.0, producto.getPrecio());
+            assertEquals(5, producto.getStock());
+            assertEquals(5, producto.getCantidad());
+            assertEquals(5, producto.consultarStock());
+        }
+
+        @Test
+        @DisplayName("equals con la misma referencia es true y con otro tipo es false")
+        void equals_ReferenciaYOtroTipo() {
+            assertTrue(producto.equals(producto));
+            assertFalse(producto.equals("algo"));
+            assertFalse(producto.equals(null));
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente")
+        void hashCode_Consistente() {
+            int h = producto.hashCode();
+            assertEquals(h, producto.hashCode());
+        }
+
+        @Test
+        @DisplayName("toString formatea precio con dos decimales y muestra stock")
+        void toString_FormatoPrecioStock() {
+            String s = producto.toString();
+            assertTrue(s.contains("$10.00"));
+            assertTrue(s.contains("Stock: 5"));
+        }
     }
 
     @Nested
