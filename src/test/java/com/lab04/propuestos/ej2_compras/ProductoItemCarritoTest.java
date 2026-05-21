@@ -82,4 +82,14 @@ class ProductoItemCarritoTest {
     void productoDisponible_TruePorDefecto() {
         assertTrue(producto.isDisponible());
     }
+
+    @Test
+    @DisplayName("toString de ItemCarrito contiene nombre, cantidad y subtotal")
+    void itemCarritoToString_ContieneDatos() {
+        ItemCarrito item = new ItemCarrito(producto, 3);
+        String resultado = item.toString();
+        assertTrue(resultado.contains("Producto Base"));
+        assertTrue(resultado.contains("3"));
+        assertTrue(resultado.contains("30"));
+    }
 }

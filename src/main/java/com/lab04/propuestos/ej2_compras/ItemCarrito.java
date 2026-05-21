@@ -18,4 +18,10 @@ public class ItemCarrito {
         this.cantidad = cantidad;
     }
     public double getSubtotal() { return producto.getPrecio() * cantidad; }
+
+    @Override
+    public String toString() {
+        return String.format("ItemCarrito{producto=%s, cantidad=%d, subtotal=%.2f}",
+                producto.getNombre(), cantidad, getSubtotal());
+    }
 }
