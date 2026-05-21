@@ -3,6 +3,7 @@ package com.lab04.propuestos.ej2_compras;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -231,6 +232,19 @@ class CarritoCompraTest {
         @DisplayName("contarItems en carrito vacío devuelve 0")
         void contarItems_CarritoVacio_DevuelveCero() {
             assertEquals(0, carrito.contarItems());
+        }
+
+        @Test
+        @DisplayName("estaVacio retorna true cuando no hay items")
+        void estaVacio_SinItems_RetornaTrue() {
+            assertTrue(carrito.estaVacio());
+        }
+
+        @Test
+        @DisplayName("estaVacio retorna false cuando hay items")
+        void estaVacio_ConItems_RetornaFalse() {
+            carrito.agregarProducto(producto1, 1);
+            assertFalse(carrito.estaVacio());
         }
     }
 

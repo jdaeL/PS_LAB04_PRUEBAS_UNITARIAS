@@ -142,6 +142,11 @@ public class CarritoCompra {
     public int contarItems() {
         return items.stream().mapToInt(ItemCarrito::getCantidad).sum();
     }
+
+    public boolean estaVacio() {
+    return items.isEmpty();
+}
+
     public List<String> getHistorialOperaciones() {
         return Collections.unmodifiableList(historialOperaciones);
     }
