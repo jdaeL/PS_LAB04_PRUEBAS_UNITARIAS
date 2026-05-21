@@ -51,4 +51,22 @@ class CarritoCompraInventarioTest {
         assertTrue(carrito.getHistorialOperaciones().stream()
                 .anyMatch(h -> h.contains("Compra finalizada")));
     }
+
+    @Test
+    @DisplayName("agregarProducto lanza excepción si stock insuficiente en inventario")
+    void agregarProducto_StockInsuficiente_LanzaExcepcion() {
+        when(inventarioMock.verificarStock("P001", 5)).thenReturn(false);
+        when(inventarioMock.consultarStock("P001")).thenReturn(2);
+        assertThrows(IllegalStateException.class,
+                () -> carrito.agregarProducto(producto, 5));
+    }
+
+    @Test
+    @DisplayName("agregarProducto permite cantidad dentro del stock disponible")
+    void agregarProducto_DentroDeStock_Exitoso() {
+        when(inventarioMock.verificarStock("P001", 2)).thenReturn(true);
+        carrito.agregarProducto(producto, 2);
+        assertEquals(1, carrito.getItems().size());
+        assertEquals(2, carrito.getItems().get(0).getCantidad());
+    }
 }
