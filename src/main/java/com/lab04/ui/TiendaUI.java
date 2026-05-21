@@ -146,9 +146,20 @@ public class TiendaUI extends Application {
         TableColumn<Producto, String> colNombre = new TableColumn<>("Producto");
         colNombre.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNombre()));
 
-        TableColumn<Producto, Double> colPrecio = new TableColumn<>("Precio");
+        TableColumn<Producto, Double> colPrecio = new TableColumn<>("Precio (Soles)");
         colPrecio.setCellValueFactory(cell -> new SimpleDoubleProperty(cell.getValue().getPrecio()).asObject());
         colPrecio.setStyle("-fx-alignment: CENTER-RIGHT;");
+        colPrecio.setCellFactory(column -> new TableCell<Producto, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%.2f", item));
+                }
+            }
+        });
 
         TableColumn<Producto, Integer> colStock = new TableColumn<>("Stock");
         colStock.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getStock()).asObject());
@@ -297,7 +308,7 @@ public class TiendaUI extends Application {
         txtNombre.setPromptText("Ej: Cámara Web HD");
         txtNombre.setPrefWidth(250);
 
-        Label lblPrecio = new Label("Precio ($):");
+        Label lblPrecio = new Label("Precio (S/):");
         lblPrecio.setStyle("-fx-font-weight: bold;");
         TextField txtPrecio = new TextField();
         txtPrecio.setPromptText("Ej: 59.99");
@@ -383,7 +394,7 @@ public class TiendaUI extends Application {
                 confirmacion.setTitle("Confirmar creación");
                 confirmacion.setHeaderText("¿Desea crear el siguiente producto?");
                 confirmacion.setContentText(String.format(
-                        "Código: %s\nNombre: %s\nPrecio: $%.2f\nStock Inicial: %d",
+                        "Código: %s\nNombre: %s\nPrecio: S/ %.2f\nStock Inicial: %d",
                         id, nombre, precio, stock));
 
                 Optional<ButtonType> resultado = confirmacion.showAndWait();
@@ -589,10 +600,10 @@ public class TiendaUI extends Application {
         Label titulo = new Label("💰 TOTAL Y PAGO");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;");
 
-        labelSubtotal = new Label("$ 0.00");
-        labelDescuento = new Label("$ 0.00");
-        labelImpuesto = new Label("$ 0.00");
-        labelTotal = new Label("$ 0.00");
+        labelSubtotal = new Label("S/ 0.00");
+        labelDescuento = new Label("S/ 0.00");
+        labelImpuesto = new Label("S/ 0.00");
+        labelTotal = new Label("S/ 0.00");
         labelTotal.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
 
         GridPane resumen = new GridPane();
@@ -703,10 +714,10 @@ public class TiendaUI extends Application {
 
     private void actualizarTotalesUI() {
         Totales totales = calcularTotales();
-        labelSubtotal.setText(String.format("$ %.2f", totales.subtotal));
-        labelDescuento.setText(String.format("$ %.2f", totales.descuento));
-        labelImpuesto.setText(String.format("$ %.2f", totales.impuesto));
-        labelTotal.setText(String.format("$ %.2f", totales.total));
+        labelSubtotal.setText(String.format("S/ %.2f", totales.subtotal));
+        labelDescuento.setText(String.format("S/ %.2f", totales.descuento));
+        labelImpuesto.setText(String.format("S/ %.2f", totales.impuesto));
+        labelTotal.setText(String.format("S/ %.2f", totales.total));
     }
 
     private Totales calcularTotales() {
