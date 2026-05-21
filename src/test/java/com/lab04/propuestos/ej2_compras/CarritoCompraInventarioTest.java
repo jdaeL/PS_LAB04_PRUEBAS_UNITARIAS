@@ -3,7 +3,9 @@ package com.lab04.propuestos.ej2_compras;
 import com.lab04.propuestos.ej1_inventario.Inventario;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @DisplayName("Pruebas de CarritoCompra con Inventario mock")
@@ -125,46 +127,51 @@ class CarritoCompraInventarioTest {
     }
 
     @Test
-    @DisplayName("ItemCarrito actualizar cantidad válida funciona")
-    void itemCarrito_ActualizarCantidadValida_Exitoso() {
-        ItemCarrito item = new ItemCarrito(producto, 2);
-        item.setCantidad(5);
-        assertEquals(5, item.getCantidad());
-        assertEquals(5000.0, item.getSubtotal()); // 5 unidades * $1000.0 = $5000.0
+    @DisplayName("finalizarCompra con múltiples productos llama salidaStock para cada uno")
+    void finalizarCompra_MultiplesProductos_LlamaSalidaStockParaCada() {
+        Producto producto2 = new Producto("P002", "Mouse", 25.0, true);
+
+        when(inventarioMock.verificarStock("P001", 2)).thenReturn(true);
+        when(inventarioMock.verificarStock("P002", 3)).thenReturn(true);
+
+        carrito.agregarProducto(producto, 2);
+        carrito.agregarProducto(producto2, 3);
+        carrito.finalizarCompra();
+
+        verify(inventarioMock).salidaStock("P001", 2, "Venta por carrito");
+        verify(inventarioMock).salidaStock("P002", 3, "Venta por carrito");
     }
 
     @Test
-    @DisplayName("Producto equals compara por ID")
-    void productoEquals_MismoId_Iguales() {
-        Producto otro = new Producto("P001", "Otro nombre", 99.0, false);
-        assertEquals(producto, otro);
+    @DisplayName("finalizarCompra NO llama salidaStock si carrito está vacío")
+    void finalizarCompra_Vacio_NoLlamaSalidaStock() {
+        assertThrows(IllegalStateException.class, () -> carrito.finalizarCompra());
+        verify(inventarioMock, never()).salidaStock(any(), anyInt(), any());
     }
 
     @Test
-    @DisplayName("Producto equals con null es false")
-    void productoEquals_ConNull_EsFalse() {
-        assertFalse(producto.equals(null));
+    @DisplayName("agregarProducto con cantidad 0 lanza excepción sin consultar inventario")
+    void agregarProducto_Cantidad0_LanzaExcepcionSinConsultarInventario() {
+        assertThrows(IllegalArgumentException.class,
+                () -> carrito.agregarProducto(producto, 0));
+        verify(inventarioMock, never()).verificarStock(any(), anyInt());
     }
 
     @Test
-    @DisplayName("Producto equals con otro tipo es false")
-    void productoEquals_OtroTipo_EsFalse() {
-        assertFalse(producto.equals("P900"));
+    @DisplayName("removerProducto no interactúa con inventario")
+    void removerProducto_NoInteractuaConInventario() {
+        when(inventarioMock.verificarStock("P001", 1)).thenReturn(true);
+        carrito.agregarProducto(producto, 1);
+        carrito.removerProducto(producto);
+        verify(inventarioMock, never()).salidaStock(any(), anyInt(), any());
     }
 
     @Test
-    @DisplayName("Producto con precio negativo lanza excepción")
-    void productoPrecioNegativo_LanzaExcepcion() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> new Producto("P01", "Nombre", -5.0, true));
-        assertEquals("El precio debe ser positivo", ex.getMessage());
-    }
-
-    @Test
-    @DisplayName("toString de Producto contiene ID, nombre y precio")
-    void productoToString_ContieneDatos() {
-        String s = producto.toString();
-        assertTrue(s.contains("P001"));
-        assertTrue(s.contains("Laptop"));
+    @DisplayName("vaciarCarrito no interactúa con inventario")
+    void vaciarCarrito_NoInteractuaConInventario() {
+        when(inventarioMock.verificarStock("P001", 1)).thenReturn(true);
+        carrito.agregarProducto(producto, 1);
+        carrito.vaciarCarrito();
+        verify(inventarioMock, never()).salidaStock(any(), anyInt(), any());
     }
 }

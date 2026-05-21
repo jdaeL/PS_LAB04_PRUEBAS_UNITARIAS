@@ -92,4 +92,49 @@ class ProductoItemCarritoTest {
         assertTrue(resultado.contains("3"));
         assertTrue(resultado.contains("30"));
     }
+
+    @Test
+    @DisplayName("ItemCarrito actualizar cantidad válida funciona")
+    void itemCarrito_ActualizarCantidadValida_Exitoso() {
+        ItemCarrito item = new ItemCarrito(producto, 2);
+        item.setCantidad(5);
+        assertEquals(5, item.getCantidad());
+        assertEquals(50.0, item.getSubtotal()); // recalcula subtotal
+    }
+
+    @Test
+    @DisplayName("Producto equals compara por ID")
+    void productoEquals_MismoId_Iguales() {
+        Producto otro = new Producto("P900", "Otro nombre", 99.0, false);
+        assertEquals(producto, otro);
+    }
+
+    @Test
+    @DisplayName("Producto equals con null es false")
+    void productoEquals_ConNull_EsFalse() {
+        assertFalse(producto.equals(null));
+    }
+
+    @Test
+    @DisplayName("Producto equals con otro tipo es false")
+    void productoEquals_OtroTipo_EsFalse() {
+        assertFalse(producto.equals("P900"));
+    }
+
+    @Test
+    @DisplayName("Producto con precio negativo lanza excepción")
+    void productoPrecioNegativo_LanzaExcepcion() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Producto("P01", "Nombre", -5.0, true));
+        assertEquals("El precio debe ser positivo", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("toString de Producto contiene ID, nombre y precio")
+    void productoToString_ContieneDatos() {
+        String s = producto.toString();
+        assertTrue(s.contains("P900"));
+        assertTrue(s.contains("Producto Base"));
+    }
+    
 }
