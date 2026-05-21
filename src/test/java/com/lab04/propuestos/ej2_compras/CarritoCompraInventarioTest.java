@@ -3,6 +3,7 @@ package com.lab04.propuestos.ej2_compras;
 import com.lab04.propuestos.ej1_inventario.Inventario;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.*;
 
 @DisplayName("Pruebas de CarritoCompra con Inventario mock")
@@ -98,4 +99,30 @@ class CarritoCompraInventarioTest {
                 () -> carrito.finalizarCompra());
         assertEquals("No hay productos en el carrito", ex.getMessage());
     }
+
+    @Test
+    @DisplayName("Producto con nombre vacío lanza excepción")
+    void productoNombreVacio_LanzaExcepcion() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Producto("P01", " ", 10.0, true));
+        assertEquals("Nombre no puede estar vacío", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Producto con nombre nulo lanza excepción")
+    void productoNombreNulo_LanzaExcepcion() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Producto("P01", null, 10.0, true));
+        assertEquals("Nombre no puede estar vacío", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Producto con ID nulo lanza excepción")
+    void productoIdNulo_LanzaExcepcion() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Producto(null, "Nombre", 10.0, true));
+        assertEquals("ID no puede estar vacío", ex.getMessage());
+    }
+
+    
 }
