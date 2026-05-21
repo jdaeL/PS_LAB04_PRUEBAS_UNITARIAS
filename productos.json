@@ -1,0 +1,50 @@
+[
+  {
+    "codigo": "P005",
+    "nombre": "Audífonos Bluetooth",
+    "precio": 45.0,
+    "stock": 7
+  },
+  {
+    "codigo": "P004",
+    "nombre": "Monitor 24\"",
+    "precio": 180.0,
+    "stock": 2
+  },
+  {
+    "codigo": "P007",
+    "nombre": "Laptop Gamer MSI",
+    "precio": 6700.0,
+    "stock": 2
+  },
+  {
+    "codigo": "P006",
+    "nombre": "Laptop Asus Rog Strix",
+    "precio": 6800.0,
+    "stock": 6
+  },
+  {
+    "codigo": "P001",
+    "nombre": "Laptop Gamer",
+    "precio": 1200.0,
+    "stock": 5
+  },
+  {
+    "codigo": "P003",
+    "nombre": "Teclado Mecánico",
+    "precio": 65.0,
+    "stock": 3
+  },
+  {
+    "codigo": "P002",
+    "nombre": "Mouse Óptico",
+    "precio": 25.0,
+    "stock": 10
+  },
+  {
+    "codigo": "P008",
+    "nombre": "Laptop Lenovo",
+    "precio": 1200.0,
+    "stock": 23
+  }
+]

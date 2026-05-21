@@ -74,10 +74,13 @@ public class TiendaUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Inicializar servicios y datos de ejemplo
         servicioPrecio = new ServicioPrecioReal();
         inventario = new Inventario();
-        cargarDatosEjemplo();
+        boolean cargadoDesdeArchivo = PersistenciaInventario.cargar(inventario);
+        if (!cargadoDesdeArchivo) {
+            cargarDatosEjemplo();
+            PersistenciaInventario.guardar(inventario); // guarda los datos de ejemplo
+        }
 
         carrito = new CarritoCompra(servicioPrecio, inventario);
 
@@ -274,6 +277,7 @@ public class TiendaUI extends Application {
                     mostrarAlerta("Stock retirado correctamente.", Alert.AlertType.INFORMATION);
                 }
                 actualizarTablas();
+                PersistenciaInventario.guardar(inventario);
             } catch (NumberFormatException e) {
                 mostrarAlerta("Cantidad inválida.", Alert.AlertType.ERROR);
             } catch (IllegalArgumentException | IllegalStateException e) {
@@ -305,6 +309,7 @@ public class TiendaUI extends Application {
         try {
             inventario.eliminarProducto(seleccionado.getId());
             actualizarTablas();
+            PersistenciaInventario.guardar(inventario);
             mostrarAlerta("Producto '" + seleccionado.getNombre() + "' eliminado correctamente.", Alert.AlertType.INFORMATION);
         } catch (IllegalArgumentException e) {
             mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -531,6 +536,7 @@ public class TiendaUI extends Application {
                 Producto nuevoProducto = new Producto(id, nombre, precio, stock);
                 inventario.agregarProducto(nuevoProducto);
                 actualizarTablas();
+                PersistenciaInventario.guardar(inventario);
 
                 lblMensaje.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
                 lblMensaje.setText("✅ Producto '" + nombre + "' creado exitosamente.");
