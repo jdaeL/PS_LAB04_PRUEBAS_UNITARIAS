@@ -53,6 +53,7 @@ public class TiendaUI extends Application {
     private Label labelDescuento;
     private Label labelImpuesto;
     private Label labelTotal;
+    private Label labelTituloCarrito;
 
     public static void main(String[] args) {
         launch(args);
@@ -267,8 +268,8 @@ public class TiendaUI extends Application {
         panel.setStyle("-fx-border-color: #16a085; -fx-border-width: 2; -fx-background-color: white;");
         panel.setPrefWidth(500);
 
-        Label titulo = new Label("🛒 CARRITO DE COMPRAS");
-        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #16a085;");
+        labelTituloCarrito = new Label("🛒 CARRITO DE COMPRAS (0 unidades)");
+        labelTituloCarrito.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #16a085;");
 
         HBox buscadorCarrito = new HBox(8);
         Label lbl = new Label("Buscar:");
@@ -296,7 +297,7 @@ public class TiendaUI extends Application {
         HBox botonesCarrito = new HBox(10, btnAgregarAlCarrito, btnActualizarCantidad, btnRemover, btnVaciar);
         botonesCarrito.setPadding(new Insets(5, 0, 5, 0));
 
-        panel.getChildren().addAll(titulo, buscadorCarrito, tablaCarrito, botonesCarrito);
+        panel.getChildren().addAll(labelTituloCarrito, buscadorCarrito, tablaCarrito, botonesCarrito);
         return panel;
     }
 
@@ -473,8 +474,13 @@ public class TiendaUI extends Application {
         actualizarHistorial();
         actualizarTotalesUI();
         actualizarEstadoAcciones();
+        actualizarTituloCarrito();
     }
 
+    private void actualizarTituloCarrito() {
+        int total = carrito.contarItems();
+        labelTituloCarrito.setText("🛒 CARRITO DE COMPRAS (" + total + " unidad" + (total == 1 ? "" : "es") + ")");
+    }
     private void mostrarAlerta(String mensaje, Alert.AlertType tipo) {
         Alert alert = new Alert(tipo);
         alert.setTitle(tipo == Alert.AlertType.ERROR ? "Error" : "Información");
