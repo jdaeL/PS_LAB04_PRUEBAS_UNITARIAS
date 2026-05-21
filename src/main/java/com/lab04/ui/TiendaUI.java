@@ -44,6 +44,8 @@ public class TiendaUI extends Application {
     private TableView<Producto> tablaInventario;
     private TableView<ItemCarritoView> tablaCarrito;
     private TextField filtroInventario;
+    private TextField filtroCarrito;
+    private FilteredList<ItemCarritoView> itemsCarritoFiltrados;
     private ListView<String> listaHistorial;
     private Button btnCalcularTotal;
     private Button btnFinalizarCompra;
@@ -268,6 +270,14 @@ public class TiendaUI extends Application {
         Label titulo = new Label("🛒 CARRITO DE COMPRAS");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #16a085;");
 
+        HBox buscadorCarrito = new HBox(8);
+        Label lbl = new Label("Buscar:");
+        filtroCarrito = new TextField();
+        filtroCarrito.setPromptText("Nombre del producto...");
+        HBox.setHgrow(filtroCarrito, Priority.ALWAYS);
+        filtroCarrito.textProperty().addListener((obs, o, n) -> aplicarFiltroCarrito(n));
+        buscadorCarrito.getChildren().addAll(lbl, filtroCarrito);
+
         // Tabla del carrito
         tablaCarrito = new TableView<>();
         configurarTablaCarrito();
@@ -286,7 +296,7 @@ public class TiendaUI extends Application {
         HBox botonesCarrito = new HBox(10, btnAgregarAlCarrito, btnActualizarCantidad, btnRemover, btnVaciar);
         botonesCarrito.setPadding(new Insets(5, 0, 5, 0));
 
-        panel.getChildren().addAll(titulo, tablaCarrito, botonesCarrito);
+        panel.getChildren().addAll(titulo, buscadorCarrito, tablaCarrito, botonesCarrito);
         return panel;
     }
 
@@ -303,7 +313,16 @@ public class TiendaUI extends Application {
 
         tablaCarrito.getColumns().addAll(colProd, colCant, colSub);
         itemsCarritoView = FXCollections.observableArrayList();
-        tablaCarrito.setItems(itemsCarritoView);
+        itemsCarritoFiltrados =
+                new FilteredList<>(itemsCarritoView, p -> true);
+
+        SortedList<ItemCarritoView> itemsOrdenados =
+                new SortedList<>(itemsCarritoFiltrados);
+
+        itemsOrdenados.comparatorProperty()
+                .bind(tablaCarrito.comparatorProperty());
+
+        tablaCarrito.setItems(itemsOrdenados);
         tablaCarrito.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
     }
 
@@ -462,6 +481,12 @@ public class TiendaUI extends Application {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    private void aplicarFiltroCarrito(String filtro) {
+        String texto = filtro == null ? "" : filtro.trim().toLowerCase();
+        itemsCarritoFiltrados.setPredicate(item ->
+                texto.isEmpty() || item.getProducto().getNombre().toLowerCase().contains(texto));
     }
 
     private com.lab04.propuestos.ej2_compras.Producto crearProductoCarrito(Producto inventarioProducto) {
