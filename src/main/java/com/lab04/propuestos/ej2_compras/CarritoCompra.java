@@ -166,4 +166,17 @@ public class CarritoCompra {
     private void registrarOperacion(String operacion) {
         historialOperaciones.add(LocalDateTime.now() + " - " + operacion);
     }
+
+    public double aplicarDescuentoManual(double porcentaje) {
+        if (porcentaje < 0 || porcentaje > 100)
+            throw new IllegalArgumentException("El porcentaje debe estar entre 0 y 100");
+        double subtotal = obtenerSubtotalBruto();
+        double descuentoManual = subtotal * (porcentaje / 100.0);
+        double conDescuento = subtotal - descuentoManual;
+        double impuesto = servicioPrecio.calcularImpuesto(conDescuento);
+        double total = conDescuento + impuesto;
+        registrarOperacion(String.format("Descuento manual aplicado: %.1f%% sobre %.2f = %.2f",
+                porcentaje, subtotal, total));
+        return total;
+    }
 }

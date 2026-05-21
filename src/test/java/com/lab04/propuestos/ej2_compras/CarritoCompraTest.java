@@ -260,6 +260,30 @@ class CarritoCompraTest {
         void obtenerSubtotalBruto_CarritoVacio_DevuelveCero() {
             assertEquals(0.0, carrito.obtenerSubtotalBruto());
         }
+
+        @Test
+        @DisplayName("aplicarDescuentoManual del 50% reduce el total a la mitad")
+        void aplicarDescuentoManual_50pct_ReduceTotal() {
+            carrito.agregarProducto(producto1, 1); // 1000
+            double total = carrito.aplicarDescuentoManual(50.0);
+            assertEquals(500.0, total);
+        }
+
+        @Test
+        @DisplayName("aplicarDescuentoManual con porcentaje negativo lanza excepción")
+        void aplicarDescuentoManual_PorcentajeNegativo_LanzaExcepcion() {
+            carrito.agregarProducto(producto1, 1);
+            assertThrows(IllegalArgumentException.class,
+                    () -> carrito.aplicarDescuentoManual(-5));
+        }
+
+        @Test
+        @DisplayName("aplicarDescuentoManual con porcentaje mayor a 100 lanza excepción")
+        void aplicarDescuentoManual_PorcentajeMayorA100_LanzaExcepcion() {
+            carrito.agregarProducto(producto1, 1);
+            assertThrows(IllegalArgumentException.class,
+                    () -> carrito.aplicarDescuentoManual(101));
+        }
     }
 
     @Nested
