@@ -20,6 +20,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.beans.binding.Bindings;
 
 import java.util.Optional;
 
@@ -49,6 +50,11 @@ public class TiendaUI extends Application {
     private ListView<String> listaHistorial;
     private Button btnCalcularTotal;
     private Button btnFinalizarCompra;
+    private Button btnAgregarAlCarrito;
+    private Button btnRetirarStock;
+    private Button btnActualizarCantidad;
+    private Button btnRemover;
+    private Button btnVaciar;
     private Label labelSubtotal;
     private Label labelDescuento;
     private Label labelImpuesto;
@@ -73,6 +79,19 @@ public class TiendaUI extends Application {
         VBox panelCarrito = crearPanelCarrito();
         VBox panelAcciones = crearPanelAcciones();
 
+        btnAgregarAlCarrito.disableProperty().bind(
+            Bindings.createBooleanBinding(() -> {
+                Producto productoSeleccionado = tablaInventario.getSelectionModel().getSelectedItem();
+                return productoSeleccionado == null || productoSeleccionado.getStock() <= 0;
+            }, tablaInventario.getSelectionModel().selectedItemProperty())
+        );
+
+        btnRetirarStock.disableProperty().bind(
+            Bindings.createBooleanBinding(() -> {
+                Producto productoSeleccionado = tablaInventario.getSelectionModel().getSelectedItem();
+                return productoSeleccionado == null || productoSeleccionado.getStock() <= 0;
+            }, tablaInventario.getSelectionModel().selectedItemProperty())
+        );
         // Layout principal
         HBox mainLayout = new HBox(20, panelInventario, panelCarrito, panelAcciones);
         mainLayout.setPadding(new Insets(15));
@@ -119,7 +138,7 @@ public class TiendaUI extends Application {
 
         // Botones de gestión de stock
         Button btnAgregarStock = new Button("➕ Agregar Stock");
-        Button btnRetirarStock = new Button("➖ Retirar Stock");
+        btnRetirarStock = new Button("➖ Retirar Stock");
         Button btnVerMovimientos = new Button("📋 Ver Movimientos");
         btnAgregarStock.setOnAction(e -> gestionarStock(true));
         btnRetirarStock.setOnAction(e -> gestionarStock(false));
@@ -284,10 +303,10 @@ public class TiendaUI extends Application {
         configurarTablaCarrito();
 
         // Botones de acciones del carrito
-        Button btnAgregarAlCarrito = new Button("➕ Agregar al carrito");
-        Button btnActualizarCantidad = new Button("✏️ Actualizar cantidad");
-        Button btnRemover = new Button("❌ Remover producto");
-        Button btnVaciar = new Button("🗑️ Vaciar carrito");
+        btnAgregarAlCarrito = new Button("➕ Agregar al carrito");
+        btnActualizarCantidad = new Button("✏️ Actualizar cantidad");
+        btnRemover = new Button("❌ Remover producto");
+        btnVaciar = new Button("🗑️ Vaciar carrito");
 
         btnAgregarAlCarrito.setOnAction(e -> agregarAlCarrito());
         btnActualizarCantidad.setOnAction(e -> actualizarCantidadCarrito());
@@ -296,7 +315,6 @@ public class TiendaUI extends Application {
 
         HBox botonesCarrito = new HBox(10, btnAgregarAlCarrito, btnActualizarCantidad, btnRemover, btnVaciar);
         botonesCarrito.setPadding(new Insets(5, 0, 5, 0));
-
         panel.getChildren().addAll(labelTituloCarrito, buscadorCarrito, tablaCarrito, botonesCarrito);
         return panel;
     }
@@ -325,6 +343,9 @@ public class TiendaUI extends Application {
 
         tablaCarrito.setItems(itemsOrdenados);
         tablaCarrito.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        tablaCarrito.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            actualizarEstadoAcciones();
+        });
     }
 
     private void agregarAlCarrito() {
@@ -555,6 +576,15 @@ public class TiendaUI extends Application {
         boolean carritoVacio = carrito.getItems().isEmpty();
         btnCalcularTotal.setDisable(carritoVacio);
         btnFinalizarCompra.setDisable(carritoVacio);
+        btnVaciar.setDisable(carritoVacio);
+        if (carritoVacio) {
+            btnActualizarCantidad.setDisable(true);
+            btnRemover.setDisable(true);
+        } else {
+            ItemCarritoView seleccionado = tablaCarrito.getSelectionModel().getSelectedItem();
+            btnActualizarCantidad.setDisable(seleccionado == null);
+            btnRemover.setDisable(seleccionado == null);
+        }
     }
 
     // Clase auxiliar para mostrar datos del carrito en la tabla
