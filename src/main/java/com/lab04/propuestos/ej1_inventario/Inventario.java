@@ -75,4 +75,18 @@ public class Inventario {
                 .filter(p -> p.getNombre().toLowerCase().contains(busqueda))
                 .collect(Collectors.toList());
     }
+
+    public int getTotalEntradas() {
+        return movimientos.stream()
+                .filter(m -> m.getTipo() == Movimiento.Tipo.ENTRADA)
+                .mapToInt(Movimiento::getCantidad)
+                .sum();
+    }
+
+    public int getTotalSalidas() {
+        return movimientos.stream()
+                .filter(m -> m.getTipo() == Movimiento.Tipo.SALIDA)
+                .mapToInt(Movimiento::getCantidad)
+                .sum();
+    }
 }

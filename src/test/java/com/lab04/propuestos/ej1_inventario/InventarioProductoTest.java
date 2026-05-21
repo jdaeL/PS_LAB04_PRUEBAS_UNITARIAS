@@ -255,6 +255,29 @@ class InventarioProductoTest {
             assertThrows(IllegalArgumentException.class,
                     () -> inventario.buscarProductoPorNombre("  "));
         }
+
+        @Test
+        @DisplayName("getTotalEntradas suma todas las entradas registradas")
+        void getTotalEntradas_SumaEntradas() {
+            inventario.agregarProducto(producto); // entrada inicial 5
+            inventario.entradaStock("P001", 3, "Reposición");
+            assertEquals(8, inventario.getTotalEntradas());
+        }
+
+        @Test
+        @DisplayName("getTotalSalidas suma todas las salidas registradas")
+        void getTotalSalidas_SumaSalidas() {
+            inventario.agregarProducto(producto);
+            inventario.salidaStock("P001", 2, "Venta");
+            inventario.salidaStock("P001", 1, "Venta");
+            assertEquals(3, inventario.getTotalSalidas());
+        }
+
+        @Test
+        @DisplayName("getTotalEntradas con inventario vacío devuelve 0")
+        void getTotalEntradas_SinMovimientos_DevuelveCero() {
+            assertEquals(0, inventario.getTotalEntradas());
+        }
     }
 
     @Nested
