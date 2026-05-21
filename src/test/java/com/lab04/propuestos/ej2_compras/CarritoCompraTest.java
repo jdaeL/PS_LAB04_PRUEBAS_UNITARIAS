@@ -140,18 +140,6 @@ class CarritoCompraTest {
         }
 
         @Test
-        @DisplayName("Historial de operaciones registra acciones")
-        void historial_RegistraOperaciones() {
-            carrito.agregarProducto(producto1, 1);
-            carrito.actualizarCantidad(producto1, 3);
-            carrito.removerProducto(producto1);
-            List<String> historial = carrito.getHistorialOperaciones();
-            assertTrue(historial.stream().anyMatch(h -> h.contains("Producto agregado: Laptop")));
-            assertTrue(historial.stream().anyMatch(h -> h.contains("Cantidad actualizada")));
-            assertTrue(historial.stream().anyMatch(h -> h.contains("Producto removido")));
-        }
-
-        @Test
         @DisplayName("Resumen con múltiples productos incluye todos los nombres")
         void resumenCompra_ConVariosProductos_ContieneNombres() {
             carrito.agregarProducto(producto1, 1);
@@ -168,6 +156,43 @@ class CarritoCompraTest {
             String resumen = carrito.obtenerResumenCompra();
             assertTrue(resumen.contains("Resumen"));
             assertTrue(resumen.contains("0,00") || resumen.contains("0.00"));
+        }
+
+        @Test
+        @DisplayName("Historial de operaciones registra acciones")
+        void historial_RegistraOperaciones() {
+            carrito.agregarProducto(producto1, 1);
+            carrito.actualizarCantidad(producto1, 3);
+            carrito.removerProducto(producto1);
+            List<String> historial = carrito.getHistorialOperaciones();
+            assertTrue(historial.stream().anyMatch(h -> h.contains("Producto agregado: Laptop")));
+            assertTrue(historial.stream().anyMatch(h -> h.contains("Cantidad actualizada")));
+            assertTrue(historial.stream().anyMatch(h -> h.contains("Producto removido")));
+        }
+
+        @Test
+        @DisplayName("Historial contiene operación de creación del carrito")
+        void historial_ContieneCreacionCarrito() {
+            assertTrue(carrito.getHistorialOperaciones().stream()
+                    .anyMatch(h -> h.contains("Carrito creado")));
+        }
+
+        @Test
+        @DisplayName("Historial crece con cada operación realizada")
+        void historial_CreceCadaOperacion() {
+            int inicial = carrito.getHistorialOperaciones().size();
+            carrito.agregarProducto(producto1, 1);
+            carrito.agregarProducto(producto2, 2);
+            assertEquals(inicial + 2, carrito.getHistorialOperaciones().size());
+        }
+
+        @Test
+        @DisplayName("Historial registra vaciado del carrito")
+        void historial_RegistraVaciado() {
+            carrito.agregarProducto(producto1, 1);
+            carrito.vaciarCarrito();
+            assertTrue(carrito.getHistorialOperaciones().stream()
+                    .anyMatch(h -> h.contains("Carrito vaciado")));
         }
     }
 
