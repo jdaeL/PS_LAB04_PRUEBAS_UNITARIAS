@@ -421,6 +421,22 @@ public class TiendaUI extends Application {
                     return;
                 }
 
+                // Validar que el precio sea positivo
+                if (precio <= 0) {
+                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    lblMensaje.setText("⚠️ El precio debe ser positivo.");
+                    txtPrecio.requestFocus();
+                    return;
+                }
+
+                // Validar que el stock inicial sea no-negativo
+                if (stock < 0) {
+                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    lblMensaje.setText("⚠️ El stock no puede ser negativo.");
+                    txtStock.requestFocus();
+                    return;
+                }
+
                 // Diálogo de confirmación
                 Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
                 confirmacion.setTitle("Confirmar creación");
