@@ -69,4 +69,25 @@ class CarritoCompraInventarioTest {
         assertEquals(1, carrito.getItems().size());
         assertEquals(2, carrito.getItems().get(0).getCantidad());
     }
+
+    @Test
+    @DisplayName("actualizarCantidad lanza excepción si nuevo valor excede stock")
+    void actualizarCantidad_ExcedeStock_LanzaExcepcion() {
+        when(inventarioMock.verificarStock("P001", 1)).thenReturn(true);
+        carrito.agregarProducto(producto, 1);
+        when(inventarioMock.verificarStock("P001", 99)).thenReturn(false);
+        when(inventarioMock.consultarStock("P001")).thenReturn(5);
+        assertThrows(IllegalStateException.class,
+                () -> carrito.actualizarCantidad(producto, 99));
+    }
+
+    @Test
+    @DisplayName("actualizarCantidad acepta valor válido dentro del stock")
+    void actualizarCantidad_DentroDeStock_Exitoso() {
+        when(inventarioMock.verificarStock("P001", 1)).thenReturn(true);
+        carrito.agregarProducto(producto, 1);
+        when(inventarioMock.verificarStock("P001", 3)).thenReturn(true);
+        carrito.actualizarCantidad(producto, 3);
+        assertEquals(3, carrito.getItems().get(0).getCantidad());
+    }
 }
