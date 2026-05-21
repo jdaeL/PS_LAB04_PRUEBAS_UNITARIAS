@@ -153,6 +153,22 @@ public class TiendaUI extends Application {
         productosOrdenados.comparatorProperty().bind(tablaInventario.comparatorProperty());
         tablaInventario.setItems(productosOrdenados);
         tablaInventario.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        tablaInventario.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(Producto item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setStyle("");
+                } else if (item.getStock() == 0) {
+                    setStyle("-fx-background-color: #f5c6cb;"); // rojo claro
+                } else if (item.getStock() <= 1) {
+                    setStyle("-fx-background-color: #fff3cd;"); // amarillo advertencia
+                } else {
+                    setStyle("");
+                }
+            }
+        });
     }
 
     private void gestionarStock(boolean esAgregar) {
