@@ -194,6 +194,15 @@ class CarritoCompraTest {
             assertTrue(carrito.getHistorialOperaciones().stream()
                     .anyMatch(h -> h.contains("Carrito vaciado")));
         }
+        
+        @Test
+        @DisplayName("finalizarCompra sin inventario lanza IllegalStateException")
+        void finalizarCompra_SinInventario_LanzaExcepcion() {
+            carrito.agregarProducto(producto1, 1);
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                    () -> carrito.finalizarCompra());
+            assertEquals("No hay inventario asociado al carrito", ex.getMessage());
+        }
     }
 
     @Nested
