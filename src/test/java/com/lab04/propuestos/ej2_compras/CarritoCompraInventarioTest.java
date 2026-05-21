@@ -90,4 +90,12 @@ class CarritoCompraInventarioTest {
         carrito.actualizarCantidad(producto, 3);
         assertEquals(3, carrito.getItems().get(0).getCantidad());
     }
+
+    @Test
+    @DisplayName("finalizarCompra con carrito vacío lanza IllegalStateException")
+    void finalizarCompra_CarritoVacio_LanzaExcepcion() {
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> carrito.finalizarCompra());
+        assertEquals("No hay productos en el carrito", ex.getMessage());
+    }
 }
