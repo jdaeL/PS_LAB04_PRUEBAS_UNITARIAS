@@ -140,8 +140,13 @@ public class TiendaUI extends Application {
         TableColumn<Producto, Integer> colStock = new TableColumn<>("Stock");
         colStock.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getStock()).asObject());
         colStock.setStyle("-fx-alignment: CENTER;");
+        TableColumn<Producto, String> colDisp = new TableColumn<>("Disp.");
+        colDisp.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().isDisponible() ? "✅" : "❌"));
+        colDisp.setStyle("-fx-alignment: CENTER;");
+        colDisp.setPrefWidth(50);
 
-        tablaInventario.getColumns().addAll(colId, colNombre, colPrecio, colStock);
+        tablaInventario.getColumns().addAll(colId, colNombre, colPrecio, colStock, colDisp);
         productosInventario = FXCollections.observableArrayList();
         productosFiltrados = new FilteredList<>(productosInventario, p -> true);
         SortedList<Producto> productosOrdenados = new SortedList<>(productosFiltrados);
