@@ -56,6 +56,9 @@ public class TiendaUI extends Application {
     private Button btnFinalizarCompra;
     private Button btnAgregarAlCarrito;
     private Button btnRetirarStock;
+    private Button btnAgregarStock;
+    private Button btnCrearProducto;
+    private Button btnEliminarProducto;
     private Button btnActualizarCantidad;
     private Button btnRemover;
     private Button btnVaciar;
@@ -145,20 +148,42 @@ public class TiendaUI extends Application {
         tablaInventario.prefWidthProperty().bind(panel.widthProperty().subtract(20));
 
         // Botones de gestión de stock
-        Button btnAgregarStock = new Button("➕ Agregar Stock");
+        btnAgregarStock = new Button("➕ Agregar Stock");
         btnRetirarStock = new Button("➖ Retirar Stock");
         Button btnVerMovimientos = new Button("📋 Ver Movimientos");
-        Button btnCrearProducto = new Button("🆕 Crear Producto");
+        btnCrearProducto = new Button("🆕 Crear Producto");
+        btnEliminarProducto = new Button("🗑️ Eliminar Producto");
+        
         btnAgregarStock.setOnAction(e -> gestionarStock(true));
         btnRetirarStock.setOnAction(e -> gestionarStock(false));
         btnVerMovimientos.setOnAction(e -> mostrarVentanaMovimientos());
         btnCrearProducto.setOnAction(e -> mostrarVentanaCrearProducto());
-        HBox botonesStock1 = new HBox(10, btnAgregarStock, btnRetirarStock);
-        HBox botonesStock2 = new HBox(10, btnVerMovimientos, btnCrearProducto);
-        botonesStock1.setPadding(new Insets(5, 0, 0, 0));
-        botonesStock2.setPadding(new Insets(0, 0, 5, 0));
+        btnEliminarProducto.setOnAction(e -> eliminarProducto());
+        
+        // Deshabilitar botones que requieren selección
+        btnRetirarStock.setDisable(true);
+        btnEliminarProducto.setDisable(true);
+        btnAgregarStock.setDisable(true);
+        
+        // Listener para habilitar/deshabilitar botones según la selección
+        tablaInventario.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            boolean haySeleccion = newVal != null;
+            btnRetirarStock.setDisable(!haySeleccion);
+            btnEliminarProducto.setDisable(!haySeleccion);
+            btnAgregarStock.setDisable(!haySeleccion);
+        });
+        
+        // Layout de botones centrado
+        HBox botonesCrear = new HBox(10, btnCrearProducto, btnEliminarProducto);
+        botonesCrear.setAlignment(Pos.CENTER);
+        
+        HBox botonesStock = new HBox(10, btnAgregarStock, btnRetirarStock);
+        botonesStock.setAlignment(Pos.CENTER);
+        
+        HBox botonesMovimientos = new HBox(10, btnVerMovimientos);
+        botonesMovimientos.setAlignment(Pos.CENTER);
 
-        panel.getChildren().addAll(titulo, buscador, tablaInventario, botonesStock1, botonesStock2);
+        panel.getChildren().addAll(titulo, buscador, tablaInventario, botonesCrear, botonesStock, botonesMovimientos);
         return panel;
     }
 
@@ -256,6 +281,35 @@ public class TiendaUI extends Application {
                 mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
             }
         });
+    }
+
+    private void eliminarProducto() {
+        Producto seleccionado = tablaInventario.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
+            mostrarAlerta("Debe seleccionar un producto.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        // Diálogo de confirmación
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar eliminación");
+        confirmacion.setHeaderText("¿Desea eliminar el siguiente producto?");
+        confirmacion.setContentText(String.format(
+                "Código: %s\nNombre: %s\nPrecio: S/ %.2f\nStock: %d",
+                seleccionado.getId(), seleccionado.getNombre(), seleccionado.getPrecio(), seleccionado.getStock()));
+
+        Optional<ButtonType> resultado = confirmacion.showAndWait();
+        if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+            return;
+        }
+
+        try {
+            inventario.eliminarProducto(seleccionado.getId());
+            actualizarTablas();
+            mostrarAlerta("Producto '" + seleccionado.getNombre() + "' eliminado correctamente.", Alert.AlertType.INFORMATION);
+        } catch (IllegalArgumentException e) {
+            mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
 
     private void mostrarVentanaMovimientos() {

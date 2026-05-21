@@ -21,6 +21,17 @@ public class Inventario {
         }
     }
 
+    // Eliminar un producto del inventario
+    public void eliminarProducto(String productoId) {
+        if (productoId == null || productoId.isBlank()) {
+            throw new IllegalArgumentException("ID de producto no puede estar vacío");
+        }
+        if (!productos.containsKey(productoId)) {
+            throw new IllegalArgumentException("Producto no encontrado: " + productoId);
+        }
+        productos.remove(productoId);
+    }
+
     // Aumentar stock de un producto existente (entrada)
     public void entradaStock(String productoId, int cantidad, String motivo) {
         Producto p = obtenerProducto(productoId);
