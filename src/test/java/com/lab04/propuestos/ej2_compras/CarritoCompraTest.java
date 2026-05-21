@@ -246,6 +246,20 @@ class CarritoCompraTest {
             carrito.agregarProducto(producto1, 1);
             assertFalse(carrito.estaVacio());
         }
+
+        @Test
+        @DisplayName("obtenerSubtotalBruto devuelve suma sin descuentos ni impuestos")
+        void obtenerSubtotalBruto_DevuelveSumaPura() {
+            carrito.agregarProducto(producto1, 2); // 2000
+            carrito.agregarProducto(producto2, 4); // 100
+            assertEquals(2100.0, carrito.obtenerSubtotalBruto());
+        }
+
+        @Test
+        @DisplayName("obtenerSubtotalBruto en carrito vacío devuelve 0")
+        void obtenerSubtotalBruto_CarritoVacio_DevuelveCero() {
+            assertEquals(0.0, carrito.obtenerSubtotalBruto());
+        }
     }
 
     @Nested

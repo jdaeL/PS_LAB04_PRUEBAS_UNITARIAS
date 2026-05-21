@@ -144,8 +144,12 @@ public class CarritoCompra {
     }
 
     public boolean estaVacio() {
-    return items.isEmpty();
-}
+        return items.isEmpty();
+    }
+
+    public double obtenerSubtotalBruto() {
+        return items.stream().mapToDouble(ItemCarrito::getSubtotal).sum();
+    }
 
     public List<String> getHistorialOperaciones() {
         return Collections.unmodifiableList(historialOperaciones);
