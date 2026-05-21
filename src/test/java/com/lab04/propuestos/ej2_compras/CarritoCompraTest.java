@@ -150,6 +150,25 @@ class CarritoCompraTest {
             assertTrue(historial.stream().anyMatch(h -> h.contains("Cantidad actualizada")));
             assertTrue(historial.stream().anyMatch(h -> h.contains("Producto removido")));
         }
+
+        @Test
+        @DisplayName("Resumen con múltiples productos incluye todos los nombres")
+        void resumenCompra_ConVariosProductos_ContieneNombres() {
+            carrito.agregarProducto(producto1, 1);
+            carrito.agregarProducto(producto2, 4);
+            String resumen = carrito.obtenerResumenCompra();
+            assertTrue(resumen.contains("Laptop"));
+            assertTrue(resumen.contains("Mouse"));
+            assertTrue(resumen.contains("TOTAL"));
+        }
+
+        @Test
+        @DisplayName("Resumen con carrito vacío solo muestra encabezado y total cero")
+        void resumenCompra_CarritoVacio_MuestraEncabezado() {
+            String resumen = carrito.obtenerResumenCompra();
+            assertTrue(resumen.contains("Resumen"));
+            assertTrue(resumen.contains("0,00") || resumen.contains("0.00"));
+        }
     }
 
     @Nested
