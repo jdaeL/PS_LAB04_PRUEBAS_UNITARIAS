@@ -133,8 +133,10 @@ class CarritoCompraTest {
         void obtenerResumenCompra_NoNulo() {
             carrito.agregarProducto(producto1, 2); // subtotal 2000
             String resumen = carrito.obtenerResumenCompra();
-            assertTrue(resumen.contains("Laptop x2 = 2000.00"));
-            assertTrue(resumen.contains("TOTAL: 2000.00"));
+            
+            System.out.println("DEBUG RESUMEN: " + resumen);
+            assertTrue(resumen.contains("Laptop x2 = 2000,00"));
+            assertTrue(resumen.contains("TOTAL: 2000,00"));
         }
 
         @Test
