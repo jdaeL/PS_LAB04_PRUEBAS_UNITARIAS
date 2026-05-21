@@ -384,14 +384,16 @@ public class TiendaUI extends Application {
         Label lblId = new Label("Código (ID):");
         lblId.setStyle("-fx-font-weight: bold;");
         TextField txtId = new TextField();
-        txtId.setPromptText("Ej: P006");
-        txtId.setPrefWidth(250);
+        txtId.setPromptText("Formato: P + 3 dígitos  (Ej: P006)");
+        txtId.setPrefWidth(260);
 
+        Label lblHintId = new Label("Debe ser 'P' seguido de exactamente 3 dígitos. Ej: P006, P123");
+        lblHintId.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px;");
         Label lblNombre = new Label("Nombre:");
         lblNombre.setStyle("-fx-font-weight: bold;");
         TextField txtNombre = new TextField();
         txtNombre.setPromptText("Ej: Cámara Web HD");
-        txtNombre.setPrefWidth(250);
+        txtNombre.setPrefWidth(260);
 
         Label lblPrecio = new Label("Precio (S/):");
         lblPrecio.setStyle("-fx-font-weight: bold;");
@@ -405,21 +407,21 @@ public class TiendaUI extends Application {
         txtStock.setPromptText("Ej: 10");
         txtStock.setPrefWidth(250);
 
-        Label lblMensaje = new Label("Debe ser 'P' seguido de exactamente 3 dígitos. Ej: P006, P123");
+        Label lblMensaje = new Label();
         lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
 
         formulario.add(lblTitulo, 0, 0, 2, 1);
         formulario.add(new Separator(), 0, 1, 2, 1);
         formulario.add(lblId, 0, 2);
         formulario.add(txtId, 1, 2);
-        formulario.add(lblNombre, 0, 3);
-        formulario.add(txtNombre, 1, 3);
-        formulario.add(lblPrecio, 0, 4);
-        formulario.add(txtPrecio, 1, 4);
-        formulario.add(lblStock, 0, 5);
-        formulario.add(txtStock, 1, 5);
-        formulario.add(new Separator(), 0, 6, 2, 1);
-        formulario.add(lblMensaje, 0, 8, 2, 1);
+        formulario.add(lblHintId, 1, 3);
+        formulario.add(lblNombre, 0, 4);
+        formulario.add(txtNombre, 1, 4);
+        formulario.add(lblPrecio, 0, 5);
+        formulario.add(txtPrecio, 1, 5);
+        formulario.add(lblStock, 0, 6);
+        formulario.add(txtStock, 1, 6);
+        formulario.add(new Separator(), 0, 7, 2, 1);
 
         // Botones
         Button btnCrear = new Button("✅ Crear Producto");
@@ -456,6 +458,15 @@ public class TiendaUI extends Application {
             if (!id.matches("^P\\d{3}$")) {
                 lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
                 lblMensaje.setText("⚠️ El ID debe tener el formato P + 3 dígitos (Ej: P006).");
+                txtId.requestFocus();
+                return;
+            }
+
+            boolean idDuplicado = inventario.listarProductos().stream()
+                .anyMatch(p -> p.getId().equalsIgnoreCase(id));
+            if (idDuplicado) {
+                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                lblMensaje.setText("⚠️ Ya existe un producto con el ID '" + id + "'.");
                 txtId.requestFocus();
                 return;
             }
@@ -537,8 +548,8 @@ public class TiendaUI extends Application {
         });
 
         HBox botones = new HBox(10, btnCrear, btnLimpiar, btnCerrar);
-        formulario.add(botones, 0, 7, 2, 1);
-
+        formulario.add(botones, 0, 8, 2, 1);
+        formulario.add(lblMensaje, 0, 9, 2, 1);
         // Resumen de productos existentes
         Label resumen = new Label(String.format("Productos registrados: %d", inventario.listarProductos().size()));
         resumen.setStyle("-fx-font-weight: bold; -fx-padding: 8px;");
