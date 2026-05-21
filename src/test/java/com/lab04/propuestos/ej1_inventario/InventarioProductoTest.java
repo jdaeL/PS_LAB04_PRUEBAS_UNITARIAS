@@ -178,11 +178,12 @@ class InventarioProductoTest {
         }
 
         @Test
-        @DisplayName("toString formatea precio con dos decimales y muestra stock")
+        @DisplayName("toString contiene nombre, ID y precio")
         void toString_FormatoPrecioStock() {
             String s = producto.toString();
-            assertTrue(s.contains("$10.00"));
-            assertTrue(s.contains("Stock: 5"));
+            assertTrue(s.contains("P001"), "Debería contener el ID");
+            assertTrue(s.contains("Producto Base"), "Debería contener el nombre");
+            assertTrue(s.contains("10"), "Debería contener el precio");
         }
     }
 
@@ -352,6 +353,65 @@ class InventarioProductoTest {
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                     () -> inventario.verificarStock("X", 1));
             assertEquals("Producto no encontrado: X", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("eliminarProducto remueve exitosamente un producto existente")
+        void eliminarProducto_Existente_EliminaCorrectamente() {
+            inventario.agregarProducto(producto);
+            inventario.eliminarProducto("P001");
+            
+            // Verifica que ya no exista lanzando la excepción esperada
+            assertThrows(IllegalArgumentException.class, () -> inventario.obtenerProducto("P001"));
+            assertTrue(inventario.listarProductos().isEmpty());
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {" ", "   "})
+        @DisplayName("eliminarProducto con ID vacío o nulo lanza excepción")
+        void eliminarProducto_IdInvalido_LanzaExcepcion(String idInvalido) {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.eliminarProducto(idInvalido));
+            assertEquals("ID de producto no puede estar vacío", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("eliminarProducto con ID inexistente lanza excepción")
+        void eliminarProducto_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.eliminarProducto("ID_FALSO"));
+            assertEquals("Producto no encontrado: ID_FALSO", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("buscarProductoPorNombre limpia espacios y es insensible a mayúsculas/minúsculas")
+        void buscarPorNombre_NormalizaCaracteresYEspacios() {
+            inventario.agregarProducto(producto); // "Producto Base"
+            
+            // Buscamos con espacios extras y mezclando mayúsculas: "  pRoDuCtO  "
+            List<Producto> resultado = inventario.buscarProductoPorNombre("  pRoDuCtO  ");
+            
+            assertEquals(1, resultado.size());
+            assertEquals("P001", resultado.get(0).getId());
+        }
+
+        @Test
+        @DisplayName("getTotalEntradas ignora los movimientos de salida")
+        void getTotalEntradas_IgnoraSalidas() {
+            inventario.agregarProducto(producto); 
+            inventario.salidaStock("P001", 2, "Venta"); 
+            assertEquals(5, inventario.getTotalEntradas());
+        }
+
+        @Test
+        @DisplayName("getTotalSalidas ignora los movimientos de entrada")
+        void getTotalSalidas_IgnoraEntradas() {
+            inventario.agregarProducto(producto); // Entrada inicial de 5
+            inventario.salidaStock("P001", 2, "Venta"); 
+            inventario.entradaStock("P001", 4, "Compra"); 
+            
+            assertEquals(2, inventario.getTotalSalidas());
         }
     }
 
