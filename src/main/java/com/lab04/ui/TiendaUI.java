@@ -292,7 +292,7 @@ public class TiendaUI extends Application {
         btnAgregarAlCarrito.setOnAction(e -> agregarAlCarrito());
         btnActualizarCantidad.setOnAction(e -> actualizarCantidadCarrito());
         btnRemover.setOnAction(e -> removerDelCarrito());
-        btnVaciar.setOnAction(e -> vaciarCarrito());
+        btnVaciar.setOnAction(e -> vaciarCarritoConConfirmacion());
 
         HBox botonesCarrito = new HBox(10, btnAgregarAlCarrito, btnActualizarCantidad, btnRemover, btnVaciar);
         botonesCarrito.setPadding(new Insets(5, 0, 5, 0));
@@ -392,7 +392,22 @@ public class TiendaUI extends Application {
         carrito.removerProducto(seleccionado.getProducto());
         actualizarTablas();
     }
-
+    private void vaciarCarritoConConfirmacion() {
+        if (carrito.estaVacio()) {
+            mostrarAlerta("El carrito ya está vacío.", Alert.AlertType.INFORMATION);
+            return;
+        }
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Vaciar carrito");
+        confirm.setHeaderText("¿Está seguro que desea vaciar el carrito?");
+        confirm.setContentText("Se eliminarán todos los productos (" + carrito.contarItems() + " unidades).");
+        confirm.showAndWait().ifPresent(resp -> {
+            if (resp == ButtonType.OK) {
+                carrito.vaciarCarrito();
+                actualizarTablas();
+            }
+        });
+    }
     private void vaciarCarrito() {
         carrito.vaciarCarrito();
         actualizarTablas();
