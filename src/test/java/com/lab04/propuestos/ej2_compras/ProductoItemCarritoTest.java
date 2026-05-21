@@ -137,4 +137,35 @@ class ProductoItemCarritoTest {
         assertTrue(s.contains("Producto Base"));
     }
     
+    @Test
+    @DisplayName("Producto con ID nulo o en blanco lanza excepción")
+    void productoIdInvalido_LanzaExcepcion() {
+        assertThrows(IllegalArgumentException.class, () -> new Producto(null, "Nombre", 10.0, true));
+        assertThrows(IllegalArgumentException.class, () -> new Producto("", "Nombre", 10.0, true));
+    }
+
+    @Test
+    @DisplayName("Producto con Nombre nulo o en blanco lanza excepción")
+    void productoNombreInvalido_LanzaExcepcion() {
+        IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class, 
+                () -> new Producto("P01", null, 10.0, true));
+        assertEquals("Nombre no puede estar vacío", ex1.getMessage());
+
+        assertThrows(IllegalArgumentException.class, () -> new Producto("P01", "  ", 10.0, true));
+        assertThrows(IllegalArgumentException.class, () -> new Producto("P01", "", 10.0, true));
+    }
+
+    @Test
+    @DisplayName("Producto equals con la misma referencia en memoria es true")
+    void productoEquals_MismaReferencia_EsTrue() {
+        // Evalúa la primera condición de optimización: if (this == o) return true;
+        assertTrue(producto.equals(producto));
+    }
+    @Test
+    @DisplayName("Producto hashCode devuelve el hashCode de su ID")
+    void producto_HashCode_CalculoCorrecto() {
+        // Invocamos directamente el método de la instancia 'producto' de tu @BeforeEach
+        int expectedHashCode = "P900".hashCode();
+        assertEquals(expectedHashCode, producto.hashCode());
+    }
 }

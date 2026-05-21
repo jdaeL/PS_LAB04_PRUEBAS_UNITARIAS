@@ -284,6 +284,80 @@ class CarritoCompraTest {
             assertThrows(IllegalArgumentException.class,
                     () -> carrito.aplicarDescuentoManual(101));
         }
+
+        @Test
+        @DisplayName("Constructor simple inicializa sin inventario y registra operación")
+        void constructorSimple_InicializaCorrectamente() {
+            CarritoCompra carritoSimple = new CarritoCompra(servicioPrecioSinImpuestos);
+            assertTrue(carritoSimple.getItems().isEmpty());
+            assertTrue(carritoSimple.getHistorialOperaciones().stream()
+                    .anyMatch(h -> h.contains("Carrito creado")));
+        }
+
+        @Test
+        @DisplayName("Constructor con ServicioPrecio nulo lanza NullPointerException")
+        void constructor_ServicioPrecioNull_LanzaExcepcion() {
+            NullPointerException ex = assertThrows(NullPointerException.class, 
+                    () -> new CarritoCompra(null));
+            assertEquals("ServicioPrecio no puede ser nulo", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("agregarProducto con producto nulo lanza excepción")
+        void agregarProducto_ProductoNull_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, 
+                    () -> carrito.agregarProducto(null, 1));
+            assertEquals("Producto no puede ser nulo", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("actualizarCantidad con producto nulo lanza excepción")
+        void actualizarCantidad_ProductoNull_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, 
+                    () -> carrito.actualizarCantidad(null, 5));
+            assertEquals("Producto nulo", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("removerProducto con producto nulo lanza excepción")
+        void removerProducto_ProductoNull_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, 
+                    () -> carrito.removerProducto(null));
+            assertEquals("Producto nulo", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("finalizarCompra con inventario asociado pero carrito vacío lanza excepción")
+        void finalizarCompra_CarritoVacioConInventario_LanzaExcepcion() {
+            com.lab04.propuestos.ej1_inventario.Inventario inventarioMock = mock(com.lab04.propuestos.ej1_inventario.Inventario.class);
+            CarritoCompra carritoConInventario = new CarritoCompra(servicioPrecioSinImpuestos, inventarioMock);
+            
+            IllegalStateException ex = assertThrows(IllegalStateException.class, 
+                    () -> carritoConInventario.finalizarCompra());
+            assertEquals("No hay productos en el carrito", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("actualizarCantidad con cantidad menor o igual a cero lanza excepción")
+        void actualizarCantidad_CantidadNoPositiva_LanzaExcepcion() {
+            carrito.agregarProducto(producto1, 2);
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, 
+                    () -> carrito.actualizarCantidad(producto1, 0));
+            assertEquals("La nueva cantidad debe ser positiva", ex.getMessage());
+
+            assertThrows(IllegalArgumentException.class, 
+                    () -> carrito.actualizarCantidad(producto1, -5));
+        }
+
+        @Test
+        @DisplayName("actualizarCantidad con producto no disponible lanza excepción")
+        void actualizarCantidad_ProductoNoDisponible_LanzaExcepcion() {
+            carrito.agregarProducto(producto1, 2);
+            producto1.setDisponible(false);
+            IllegalStateException ex = assertThrows(IllegalStateException.class, 
+                    () -> carrito.actualizarCantidad(producto1, 5));
+            assertEquals("Producto no disponible: " + producto1.getNombre(), ex.getMessage());
+        }
     }
 
     @Nested
