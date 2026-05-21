@@ -358,8 +358,25 @@ public class TiendaUI extends Application {
             }
 
             try {
-                double precio = Double.parseDouble(precioStr);
-                int stock = Integer.parseInt(stockStr);
+                double precio;
+                try {
+                    precio = Double.parseDouble(precioStr);
+                } catch (NumberFormatException ex) {
+                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    lblMensaje.setText("⚠️ El precio debe ser un número válido (Ej: 59.99).");
+                    txtPrecio.requestFocus();
+                    return;
+                }
+
+                int stock;
+                try {
+                    stock = Integer.parseInt(stockStr);
+                } catch (NumberFormatException ex) {
+                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    lblMensaje.setText("⚠️ El stock debe ser un número entero (sin decimales).");
+                    txtStock.requestFocus();
+                    return;
+                }
 
                 // Diálogo de confirmación
                 Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
@@ -387,9 +404,6 @@ public class TiendaUI extends Application {
                 txtPrecio.clear();
                 txtStock.clear();
                 txtId.requestFocus();
-            } catch (NumberFormatException ex) {
-                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                lblMensaje.setText("⚠️ Precio o stock inválido. Use valores numéricos.");
             } catch (IllegalArgumentException ex) {
                 lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
                 lblMensaje.setText("⚠️ " + ex.getMessage());
