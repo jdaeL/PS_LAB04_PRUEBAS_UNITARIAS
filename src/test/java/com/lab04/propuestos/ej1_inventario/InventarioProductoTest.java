@@ -359,11 +359,46 @@ class InventarioProductoTest {
         }
 
         @Test
+        @DisplayName("Movimiento con productoId null lanza excepción")
+        void movimientoProductoIdNull_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Movimiento(Movimiento.Tipo.SALIDA, 1, null, "Test"));
+            assertEquals("ProductoId no puede estar vacío", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Movimiento con cantidad negativa lanza excepción")
+        void movimientoCantidadNegativa_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Movimiento(Movimiento.Tipo.ENTRADA, -5, "P001", "Test"));
+            assertEquals("La cantidad debe ser positiva", ex.getMessage());
+        }
+
+        @Test
         @DisplayName("toString incluye datos relevantes")
         void movimientoToString_ContieneDatos() {
             Movimiento movimiento = new Movimiento(Movimiento.Tipo.SALIDA, 1, "P001", "Venta");
             assertTrue(movimiento.toString().contains("SALIDA"));
             assertTrue(movimiento.toString().contains("P001"));
+        }
+
+        @Test
+        @DisplayName("Movimiento con motivo null es aceptado y toString muestra null")
+        void movimientoMotivoNull_Aceptado() {
+            Movimiento movimiento = new Movimiento(Movimiento.Tipo.ENTRADA, 2, "P010", null);
+            assertTrue(movimiento.toString().contains("null"));
+            assertEquals(null, movimiento.getMotivo());
+            assertEquals(Movimiento.Tipo.ENTRADA, movimiento.getTipo());
+            assertEquals(2, movimiento.getCantidad());
+            assertEquals("P010", movimiento.getProductoId());
+            assertNotNull(movimiento.getFecha());
+        }
+
+        @Test
+        @DisplayName("Movimiento almacena y devuelve el motivo correctamente")
+        void movimientoGetMotivo_RetornaValor() {
+            Movimiento movimiento = new Movimiento(Movimiento.Tipo.ENTRADA, 3, "P011", "Ajuste");
+            assertEquals("Ajuste", movimiento.getMotivo());
         }
     }
 }
