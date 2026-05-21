@@ -6,7 +6,7 @@ public class Producto {
     private final String codigo;
     private final String nombre;
     private final double precio;
-    private int stock;  // cantidad disponible en inventario
+    private int stock;
 
     public Producto(String codigo, String nombre, double precio, int stockInicial) {
         if (codigo == null || codigo.isBlank())
@@ -17,8 +17,14 @@ public class Producto {
             throw new IllegalArgumentException("El precio debe ser positivo");
         if (stockInicial < 0)
             throw new IllegalArgumentException("El stock inicial no puede ser negativo");
-        this.codigo = codigo;
-        this.nombre = nombre;
+        
+        // Sanitización de datos de entrada
+        // Quitamos espacios extra y forzamos el código a mayúsculas para evitar duplicados accidentales
+        this.codigo = codigo.trim().toUpperCase();
+        
+        // Quitamos espacios extra al inicio y final del nombre
+        this.nombre = nombre.trim();
+        
         this.precio = precio;
         this.stock = stockInicial;
     }
@@ -31,7 +37,6 @@ public class Producto {
     public int getStock() { return stock; }
     public int getCantidad() { return stock; }
 
-    // Métodos de gestión de stock (Ejercicio 1)
     public void agregarStock(int cantidad) {
         if (cantidad <= 0)
             throw new IllegalArgumentException("La cantidad a agregar debe ser positiva");
