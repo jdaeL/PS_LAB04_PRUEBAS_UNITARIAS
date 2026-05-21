@@ -231,6 +231,30 @@ class InventarioProductoTest {
             assertThrows(UnsupportedOperationException.class,
                     () -> movimientos.add(new Movimiento(Movimiento.Tipo.ENTRADA, 1, "P001", "Test")));
         }
+
+        @Test
+        @DisplayName("buscarProductoPorNombre devuelve coincidencias parciales")
+        void buscarPorNombre_DevuelveCoincidencias() {
+            inventario.agregarProducto(producto);
+            inventario.agregarProducto(new Producto("P002", "Producto Extra", 5.0, 2));
+            List<Producto> resultado = inventario.buscarProductoPorNombre("Producto");
+            assertEquals(2, resultado.size());
+        }
+
+        @Test
+        @DisplayName("buscarProductoPorNombre sin coincidencias devuelve lista vacía")
+        void buscarPorNombre_SinCoincidencias_DevuelveVacio() {
+            inventario.agregarProducto(producto);
+            List<Producto> resultado = inventario.buscarProductoPorNombre("XYZ");
+            assertTrue(resultado.isEmpty());
+        }
+
+        @Test
+        @DisplayName("buscarProductoPorNombre con nombre vacío lanza excepción")
+        void buscarPorNombre_NombreVacio_LanzaExcepcion() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> inventario.buscarProductoPorNombre("  "));
+        }
     }
 
     @Nested

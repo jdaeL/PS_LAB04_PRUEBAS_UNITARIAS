@@ -66,4 +66,13 @@ public class Inventario {
     private void registrarMovimiento(Movimiento.Tipo tipo, int cantidad, String productoId, String motivo) {
         movimientos.add(new Movimiento(tipo, cantidad, productoId, motivo));
     }
+
+    public List<Producto> buscarProductoPorNombre(String nombre) {
+        if (nombre == null || nombre.isBlank())
+            throw new IllegalArgumentException("El nombre de búsqueda no puede estar vacío");
+        String busqueda = nombre.trim().toLowerCase();
+        return productos.values().stream()
+                .filter(p -> p.getNombre().toLowerCase().contains(busqueda))
+                .collect(Collectors.toList());
+    }
 }
