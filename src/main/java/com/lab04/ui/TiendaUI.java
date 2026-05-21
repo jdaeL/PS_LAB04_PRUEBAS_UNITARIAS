@@ -104,7 +104,9 @@ public class TiendaUI extends Application {
         VBox panel = new VBox(10);
         panel.setPadding(new Insets(10));
         panel.setStyle("-fx-border-color: #2c3e50; -fx-border-width: 2; -fx-background-color: white;");
-        panel.setPrefWidth(400);
+        // Dar más espacio al panel de inventario para que las columnas puedan mostrarse
+        // correctamente en pantallas habituales.
+        panel.setPrefWidth(600);
 
         Label titulo = new Label("📦 GESTIÓN DE INVENTARIO");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
@@ -120,6 +122,8 @@ public class TiendaUI extends Application {
         // Tabla de inventario
         tablaInventario = new TableView<>();
         configurarTablaInventario();
+        // Hacer que la tabla intente usar el ancho del panel (si hay menos espacio, aparecerá scrollbar)
+        tablaInventario.prefWidthProperty().bind(panel.widthProperty().subtract(20));
 
         // Botones de gestión de stock
         Button btnAgregarStock = new Button("➕ Agregar Stock");
@@ -169,13 +173,22 @@ public class TiendaUI extends Application {
         colDisp.setStyle("-fx-alignment: CENTER;");
         colDisp.setPrefWidth(50);
 
+        // Asignar anchos preferidos a las columnas para evitar truncado
+        colId.setPrefWidth(60);
+        colNombre.setPrefWidth(200);
+        colNombre.setMinWidth(150);
+        colPrecio.setPrefWidth(110);
+        colStock.setPrefWidth(90);
+        colDisp.setPrefWidth(60);
+
         tablaInventario.getColumns().addAll(colId, colNombre, colPrecio, colStock, colDisp);
         productosInventario = FXCollections.observableArrayList();
         productosFiltrados = new FilteredList<>(productosInventario, p -> true);
         SortedList<Producto> productosOrdenados = new SortedList<>(productosFiltrados);
         productosOrdenados.comparatorProperty().bind(tablaInventario.comparatorProperty());
         tablaInventario.setItems(productosOrdenados);
-        tablaInventario.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        // No forzar ajuste automático; permitir scroll horizontal si la ventana es más pequeña
+        tablaInventario.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
         tablaInventario.setRowFactory(tv -> new TableRow<>() {
             @Override
