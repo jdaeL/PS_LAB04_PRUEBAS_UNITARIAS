@@ -194,7 +194,7 @@ class CarritoCompraTest {
             assertTrue(carrito.getHistorialOperaciones().stream()
                     .anyMatch(h -> h.contains("Carrito vaciado")));
         }
-        
+
         @Test
         @DisplayName("finalizarCompra sin inventario lanza IllegalStateException")
         void finalizarCompra_SinInventario_LanzaExcepcion() {
@@ -202,6 +202,21 @@ class CarritoCompraTest {
             IllegalStateException ex = assertThrows(IllegalStateException.class,
                     () -> carrito.finalizarCompra());
             assertEquals("No hay inventario asociado al carrito", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("getItems devuelve lista inmodificable")
+        void getItems_EsInmodificable() {
+            carrito.agregarProducto(producto1, 1);
+            assertThrows(UnsupportedOperationException.class,
+                    () -> carrito.getItems().clear());
+        }
+
+        @Test
+        @DisplayName("getHistorialOperaciones devuelve lista inmodificable")
+        void getHistorial_EsInmodificable() {
+            assertThrows(UnsupportedOperationException.class,
+                    () -> carrito.getHistorialOperaciones().add("hack"));
         }
     }
 
