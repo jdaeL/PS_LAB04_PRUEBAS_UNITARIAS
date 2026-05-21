@@ -35,4 +35,9 @@ public class Producto {
 
     @Override
     public int hashCode() { return id.hashCode(); }
+
+    @Override
+    public String toString() {
+        return String.format("%s (%s) - $%.2f - Disponible: %s", nombre, id, precio, disponible);
+    }
 }
