@@ -218,6 +218,20 @@ class CarritoCompraTest {
             assertThrows(UnsupportedOperationException.class,
                     () -> carrito.getHistorialOperaciones().add("hack"));
         }
+
+        @Test
+        @DisplayName("contarItems devuelve suma total de unidades")
+        void contarItems_DevuelveSumaTotalUnidades() {
+            carrito.agregarProducto(producto1, 3);
+            carrito.agregarProducto(producto2, 2);
+            assertEquals(5, carrito.contarItems());
+        }
+
+        @Test
+        @DisplayName("contarItems en carrito vacío devuelve 0")
+        void contarItems_CarritoVacio_DevuelveCero() {
+            assertEquals(0, carrito.contarItems());
+        }
     }
 
     @Nested

@@ -139,6 +139,9 @@ public class CarritoCompra {
         log.info("Compra finalizada exitosamente");
     }
 
+    public int contarItems() {
+        return items.stream().mapToInt(ItemCarrito::getCantidad).sum();
+    }
     public List<String> getHistorialOperaciones() {
         return Collections.unmodifiableList(historialOperaciones);
     }
