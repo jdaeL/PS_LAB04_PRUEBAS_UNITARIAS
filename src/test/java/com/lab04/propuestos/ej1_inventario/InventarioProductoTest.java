@@ -257,6 +257,22 @@ class InventarioProductoTest {
         }
 
         @Test
+        @DisplayName("buscarProductoPorNombre con null lanza excepción")
+        void buscarPorNombre_Null_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> inventario.buscarProductoPorNombre(null));
+            assertEquals("El nombre de búsqueda no puede estar vacío", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Agregar producto nulo lanza excepción")
+        void agregarProducto_Nulo_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> inventario.agregarProducto(null));
+            assertEquals("Producto no puede ser nulo", ex.getMessage());
+        }
+
+        @Test
         @DisplayName("getTotalEntradas suma todas las entradas registradas")
         void getTotalEntradas_SumaEntradas() {
             inventario.agregarProducto(producto); // entrada inicial 5
@@ -277,6 +293,30 @@ class InventarioProductoTest {
         @DisplayName("getTotalEntradas con inventario vacío devuelve 0")
         void getTotalEntradas_SinMovimientos_DevuelveCero() {
             assertEquals(0, inventario.getTotalEntradas());
+        }
+
+        @Test
+        @DisplayName("entradaStock en producto inexistente lanza excepción")
+        void entradaStock_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.entradaStock("X", 1, "Test"));
+            assertEquals("Producto no encontrado: X", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("salidaStock en producto inexistente lanza excepción")
+        void salidaStock_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.salidaStock("X", 1, "Test"));
+            assertEquals("Producto no encontrado: X", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("verificarStock en producto inexistente lanza excepción")
+        void verificarStock_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.verificarStock("X", 1));
+            assertEquals("Producto no encontrado: X", ex.getMessage());
         }
     }
 
