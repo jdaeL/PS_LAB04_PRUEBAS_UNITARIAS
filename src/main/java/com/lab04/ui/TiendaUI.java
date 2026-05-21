@@ -406,7 +406,7 @@ public class TiendaUI extends Application {
         txtStock.setPromptText("Ej: 10");
         txtStock.setPrefWidth(250);
 
-        Label lblMensaje = new Label();
+        Label lblMensaje = new Label("Debe ser 'P' seguido de exactamente 3 dígitos. Ej: P006, P123");
         lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
 
         formulario.add(lblTitulo, 0, 0, 2, 1);
@@ -454,6 +454,20 @@ public class TiendaUI extends Application {
                 return;
             }
 
+            if (!id.matches("^P\\d{3}$")) {
+                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                lblMensaje.setText("⚠️ El ID debe tener el formato P + 3 dígitos (Ej: P006).");
+                txtId.requestFocus();
+                return;
+            }
+            boolean nombreDuplicado = inventario.listarProductos().stream()
+                    .anyMatch(p -> p.getNombre().equalsIgnoreCase(nombre));
+            if (nombreDuplicado) {
+                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                lblMensaje.setText("⚠️ Ya existe un producto con el nombre '" + nombre + "'.");
+                txtNombre.requestFocus();
+                return;
+            }
             try {
                 double precio;
                 try {
