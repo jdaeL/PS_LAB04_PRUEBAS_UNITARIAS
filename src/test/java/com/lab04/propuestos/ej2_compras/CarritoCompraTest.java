@@ -327,16 +327,30 @@ class CarritoCompraTest {
     @DisplayName("ServicioPrecioReal")
     class ServicioPrecioRealTests {
 
-        @Test
-        @DisplayName("Descuento aplica 10% si total es mayor a 500")
-        void descuento_SeAplicaSobreTotalMayorA500() {
-            assertEquals(100.0, servicioPrecioReal.calcularDescuento(1000.0));
+        @ParameterizedTest
+        @CsvSource({
+            "0,    0.0",
+            "100,  0.0",
+            "500,  0.0",
+            "501,  50.1",
+            "1000, 100.0",
+            "2000, 200.0"
+        })
+        @DisplayName("Descuento 10% solo aplica para totales mayores a 500")
+        void descuento_AplicaSoloPorEncimaDe500(double total, double descuentoEsperado) {
+            assertEquals(descuentoEsperado, servicioPrecioReal.calcularDescuento(total), 0.001);
         }
 
-        @Test
-        @DisplayName("Impuesto aplica 19% sobre el total")
-        void impuesto_SeCalculaSobreTotal() {
-            assertEquals(19.0, servicioPrecioReal.calcularImpuesto(100.0));
+        @ParameterizedTest
+        @CsvSource({
+            "0,    0.0",
+            "100,  19.0",
+            "200,  38.0",
+            "1000, 190.0"
+        })
+        @DisplayName("Impuesto 19% se aplica sobre cualquier monto")
+        void impuesto_SeAplicaSiempre(double total, double impuestoEsperado) {
+            assertEquals(impuestoEsperado, servicioPrecioReal.calcularImpuesto(total), 0.001);
         }
     }
 }
