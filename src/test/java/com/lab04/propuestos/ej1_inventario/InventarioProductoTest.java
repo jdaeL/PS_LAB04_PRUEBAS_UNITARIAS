@@ -149,6 +149,41 @@ class InventarioProductoTest {
             assertTrue(producto.toString().contains("Producto Base"));
             assertTrue(producto.toString().contains("P001"));
         }
+
+        @Test
+        @DisplayName("Getters retornan los valores esperados")
+        void getters_RetornanValores() {
+            assertEquals("P001", producto.getCodigo());
+            assertEquals("P001", producto.getId());
+            assertEquals("Producto Base", producto.getNombre());
+            assertEquals(10.0, producto.getPrecio());
+            assertEquals(5, producto.getStock());
+            assertEquals(5, producto.getCantidad());
+            assertEquals(5, producto.consultarStock());
+        }
+
+        @Test
+        @DisplayName("equals con la misma referencia es true y con otro tipo es false")
+        void equals_ReferenciaYOtroTipo() {
+            assertTrue(producto.equals(producto));
+            assertFalse(producto.equals("algo"));
+            assertFalse(producto.equals(null));
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente")
+        void hashCode_Consistente() {
+            int h = producto.hashCode();
+            assertEquals(h, producto.hashCode());
+        }
+
+        @Test
+        @DisplayName("toString formatea precio con dos decimales y muestra stock")
+        void toString_FormatoPrecioStock() {
+            String s = producto.toString();
+            assertTrue(s.contains("$10.00"));
+            assertTrue(s.contains("Stock: 5"));
+        }
     }
 
     @Nested
@@ -257,6 +292,22 @@ class InventarioProductoTest {
         }
 
         @Test
+        @DisplayName("buscarProductoPorNombre con null lanza excepción")
+        void buscarPorNombre_Null_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> inventario.buscarProductoPorNombre(null));
+            assertEquals("El nombre de búsqueda no puede estar vacío", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Agregar producto nulo lanza excepción")
+        void agregarProducto_Nulo_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> inventario.agregarProducto(null));
+            assertEquals("Producto no puede ser nulo", ex.getMessage());
+        }
+
+        @Test
         @DisplayName("getTotalEntradas suma todas las entradas registradas")
         void getTotalEntradas_SumaEntradas() {
             inventario.agregarProducto(producto); // entrada inicial 5
@@ -277,6 +328,30 @@ class InventarioProductoTest {
         @DisplayName("getTotalEntradas con inventario vacío devuelve 0")
         void getTotalEntradas_SinMovimientos_DevuelveCero() {
             assertEquals(0, inventario.getTotalEntradas());
+        }
+
+        @Test
+        @DisplayName("entradaStock en producto inexistente lanza excepción")
+        void entradaStock_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.entradaStock("X", 1, "Test"));
+            assertEquals("Producto no encontrado: X", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("salidaStock en producto inexistente lanza excepción")
+        void salidaStock_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.salidaStock("X", 1, "Test"));
+            assertEquals("Producto no encontrado: X", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("verificarStock en producto inexistente lanza excepción")
+        void verificarStock_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.verificarStock("X", 1));
+            assertEquals("Producto no encontrado: X", ex.getMessage());
         }
     }
 
@@ -319,11 +394,46 @@ class InventarioProductoTest {
         }
 
         @Test
+        @DisplayName("Movimiento con productoId null lanza excepción")
+        void movimientoProductoIdNull_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Movimiento(Movimiento.Tipo.SALIDA, 1, null, "Test"));
+            assertEquals("ProductoId no puede estar vacío", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Movimiento con cantidad negativa lanza excepción")
+        void movimientoCantidadNegativa_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Movimiento(Movimiento.Tipo.ENTRADA, -5, "P001", "Test"));
+            assertEquals("La cantidad debe ser positiva", ex.getMessage());
+        }
+
+        @Test
         @DisplayName("toString incluye datos relevantes")
         void movimientoToString_ContieneDatos() {
             Movimiento movimiento = new Movimiento(Movimiento.Tipo.SALIDA, 1, "P001", "Venta");
             assertTrue(movimiento.toString().contains("SALIDA"));
             assertTrue(movimiento.toString().contains("P001"));
+        }
+
+        @Test
+        @DisplayName("Movimiento con motivo null es aceptado y toString muestra null")
+        void movimientoMotivoNull_Aceptado() {
+            Movimiento movimiento = new Movimiento(Movimiento.Tipo.ENTRADA, 2, "P010", null);
+            assertTrue(movimiento.toString().contains("null"));
+            assertEquals(null, movimiento.getMotivo());
+            assertEquals(Movimiento.Tipo.ENTRADA, movimiento.getTipo());
+            assertEquals(2, movimiento.getCantidad());
+            assertEquals("P010", movimiento.getProductoId());
+            assertNotNull(movimiento.getFecha());
+        }
+
+        @Test
+        @DisplayName("Movimiento almacena y devuelve el motivo correctamente")
+        void movimientoGetMotivo_RetornaValor() {
+            Movimiento movimiento = new Movimiento(Movimiento.Tipo.ENTRADA, 3, "P011", "Ajuste");
+            assertEquals("Ajuste", movimiento.getMotivo());
         }
     }
 }

@@ -19,6 +19,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.geometry.Pos;
 import javafx.stage.Stage;
 import javafx.beans.binding.Bindings;
 
@@ -26,9 +27,12 @@ import java.util.Optional;
 
 /**
  * Interfaz gráfica profesional que integra:
- * - Gestión de inventario (Ejercicio 1): ver productos, agregar stock, retirar stock.
- * - Carrito de compras (Ejercicio 2): agregar productos al carrito, actualizar cantidades,
- *   calcular total con descuentos/impuestos, finalizar compra (descuenta stock real).
+ * - Gestión de inventario (Ejercicio 1): ver productos, agregar stock, retirar
+ * stock.
+ * - Carrito de compras (Ejercicio 2): agregar productos al carrito, actualizar
+ * cantidades,
+ * calcular total con descuentos/impuestos, finalizar compra (descuenta stock
+ * real).
  */
 public class TiendaUI extends Application {
 
@@ -140,13 +144,17 @@ public class TiendaUI extends Application {
         Button btnAgregarStock = new Button("➕ Agregar Stock");
         btnRetirarStock = new Button("➖ Retirar Stock");
         Button btnVerMovimientos = new Button("📋 Ver Movimientos");
+        Button btnCrearProducto = new Button("🆕 Crear Producto");
         btnAgregarStock.setOnAction(e -> gestionarStock(true));
         btnRetirarStock.setOnAction(e -> gestionarStock(false));
         btnVerMovimientos.setOnAction(e -> mostrarVentanaMovimientos());
-        HBox botonesStock = new HBox(10, btnAgregarStock, btnRetirarStock, btnVerMovimientos);
-        botonesStock.setPadding(new Insets(5, 0, 5, 0));
+        btnCrearProducto.setOnAction(e -> mostrarVentanaCrearProducto());
+        HBox botonesStock1 = new HBox(10, btnAgregarStock, btnRetirarStock);
+        HBox botonesStock2 = new HBox(10, btnVerMovimientos, btnCrearProducto);
+        botonesStock1.setPadding(new Insets(5, 0, 0, 0));
+        botonesStock2.setPadding(new Insets(0, 0, 5, 0));
 
-        panel.getChildren().addAll(titulo, buscador, tablaInventario, botonesStock);
+        panel.getChildren().addAll(titulo, buscador, tablaInventario, botonesStock1, botonesStock2);
         return panel;
     }
 
@@ -157,16 +165,26 @@ public class TiendaUI extends Application {
         TableColumn<Producto, String> colNombre = new TableColumn<>("Producto");
         colNombre.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNombre()));
 
-        TableColumn<Producto, Double> colPrecio = new TableColumn<>("Precio");
+        TableColumn<Producto, Double> colPrecio = new TableColumn<>("Precio (Soles)");
         colPrecio.setCellValueFactory(cell -> new SimpleDoubleProperty(cell.getValue().getPrecio()).asObject());
         colPrecio.setStyle("-fx-alignment: CENTER-RIGHT;");
+        colPrecio.setCellFactory(column -> new TableCell<Producto, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%.2f", item));
+                }
+            }
+        });
 
         TableColumn<Producto, Integer> colStock = new TableColumn<>("Stock");
         colStock.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getStock()).asObject());
         colStock.setStyle("-fx-alignment: CENTER;");
         TableColumn<Producto, String> colDisp = new TableColumn<>("Disp.");
-        colDisp.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().isDisponible() ? "✅" : "❌"));
+        colDisp.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().isDisponible() ? "✅" : "❌"));
         colDisp.setStyle("-fx-alignment: CENTER;");
         colDisp.setPrefWidth(50);
 
@@ -261,9 +279,12 @@ public class TiendaUI extends Application {
             @Override
             protected void updateItem(Movimiento m, boolean empty) {
                 super.updateItem(m, empty);
-                if (m == null || empty) setStyle("");
-                else if (m.getTipo() == Movimiento.Tipo.ENTRADA) setStyle("-fx-background-color: #d4edda;");
-                else setStyle("-fx-background-color: #f8d7da;");
+                if (m == null || empty)
+                    setStyle("");
+                else if (m.getTipo() == Movimiento.Tipo.ENTRADA)
+                    setStyle("-fx-background-color: #d4edda;");
+                else
+                    setStyle("-fx-background-color: #f8d7da;");
             }
         });
 
@@ -275,6 +296,161 @@ public class TiendaUI extends Application {
         VBox layout = new VBox(10, tabla, resumen);
         layout.setPadding(new Insets(10));
         VBox.setVgrow(tabla, Priority.ALWAYS);
+
+        ventana.setScene(new Scene(layout, 700, 450));
+        ventana.show();
+    }
+
+    private void mostrarVentanaCrearProducto() {
+        Stage ventana = new Stage();
+        ventana.setTitle("🆕 Crear Nuevo Producto");
+
+        // Formulario
+        GridPane formulario = new GridPane();
+        formulario.setHgap(12);
+        formulario.setVgap(12);
+        formulario.setPadding(new Insets(30));
+        formulario.setAlignment(Pos.CENTER);
+
+        Label lblTitulo = new Label("📦 NUEVO PRODUCTO");
+        lblTitulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        Label lblId = new Label("Código (ID):");
+        lblId.setStyle("-fx-font-weight: bold;");
+        TextField txtId = new TextField();
+        txtId.setPromptText("Ej: P006");
+        txtId.setPrefWidth(250);
+
+        Label lblNombre = new Label("Nombre:");
+        lblNombre.setStyle("-fx-font-weight: bold;");
+        TextField txtNombre = new TextField();
+        txtNombre.setPromptText("Ej: Cámara Web HD");
+        txtNombre.setPrefWidth(250);
+
+        Label lblPrecio = new Label("Precio (S/):");
+        lblPrecio.setStyle("-fx-font-weight: bold;");
+        TextField txtPrecio = new TextField();
+        txtPrecio.setPromptText("Ej: 59.99");
+        txtPrecio.setPrefWidth(250);
+
+        Label lblStock = new Label("Stock Inicial:");
+        lblStock.setStyle("-fx-font-weight: bold;");
+        TextField txtStock = new TextField();
+        txtStock.setPromptText("Ej: 10");
+        txtStock.setPrefWidth(250);
+
+        Label lblMensaje = new Label();
+        lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+
+        formulario.add(lblTitulo, 0, 0, 2, 1);
+        formulario.add(new Separator(), 0, 1, 2, 1);
+        formulario.add(lblId, 0, 2);
+        formulario.add(txtId, 1, 2);
+        formulario.add(lblNombre, 0, 3);
+        formulario.add(txtNombre, 1, 3);
+        formulario.add(lblPrecio, 0, 4);
+        formulario.add(txtPrecio, 1, 4);
+        formulario.add(lblStock, 0, 5);
+        formulario.add(txtStock, 1, 5);
+        formulario.add(new Separator(), 0, 6, 2, 1);
+        formulario.add(lblMensaje, 0, 8, 2, 1);
+
+        // Botones
+        Button btnCrear = new Button("✅ Crear Producto");
+        btnCrear.setStyle(
+                "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20;");
+        Button btnLimpiar = new Button("🔄 Limpiar");
+        btnLimpiar.setStyle("-fx-padding: 8 20;");
+        Button btnCerrar = new Button("❌ Cerrar");
+        btnCerrar.setStyle("-fx-padding: 8 20;");
+
+        btnLimpiar.setOnAction(e -> {
+            txtId.clear();
+            txtNombre.clear();
+            txtPrecio.clear();
+            txtStock.clear();
+            lblMensaje.setText("");
+            lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+        });
+
+        btnCerrar.setOnAction(e -> ventana.close());
+
+        btnCrear.setOnAction(e -> {
+            String id = txtId.getText().trim();
+            String nombre = txtNombre.getText().trim();
+            String precioStr = txtPrecio.getText().trim();
+            String stockStr = txtStock.getText().trim();
+
+            if (id.isEmpty() || nombre.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty()) {
+                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                lblMensaje.setText("⚠️ Todos los campos son obligatorios.");
+                return;
+            }
+
+            try {
+                double precio;
+                try {
+                    precio = Double.parseDouble(precioStr);
+                } catch (NumberFormatException ex) {
+                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    lblMensaje.setText("⚠️ El precio debe ser un número válido (Ej: 59.99).");
+                    txtPrecio.requestFocus();
+                    return;
+                }
+
+                int stock;
+                try {
+                    stock = Integer.parseInt(stockStr);
+                } catch (NumberFormatException ex) {
+                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    lblMensaje.setText("⚠️ El stock debe ser un número entero (sin decimales).");
+                    txtStock.requestFocus();
+                    return;
+                }
+
+                // Diálogo de confirmación
+                Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmacion.setTitle("Confirmar creación");
+                confirmacion.setHeaderText("¿Desea crear el siguiente producto?");
+                confirmacion.setContentText(String.format(
+                        "Código: %s\nNombre: %s\nPrecio: S/ %.2f\nStock Inicial: %d",
+                        id, nombre, precio, stock));
+
+                Optional<ButtonType> resultado = confirmacion.showAndWait();
+                if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+                    return;
+                }
+
+                Producto nuevoProducto = new Producto(id, nombre, precio, stock);
+                inventario.agregarProducto(nuevoProducto);
+                actualizarTablas();
+
+                lblMensaje.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                lblMensaje.setText("✅ Producto '" + nombre + "' creado exitosamente.");
+
+                // Limpiar campos para siguiente producto
+                txtId.clear();
+                txtNombre.clear();
+                txtPrecio.clear();
+                txtStock.clear();
+                txtId.requestFocus();
+            } catch (IllegalArgumentException ex) {
+                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                lblMensaje.setText("⚠️ " + ex.getMessage());
+            }
+        });
+
+        HBox botones = new HBox(10, btnCrear, btnLimpiar, btnCerrar);
+        formulario.add(botones, 0, 7, 2, 1);
+
+        // Resumen de productos existentes
+        Label resumen = new Label(String.format("Productos registrados: %d", inventario.listarProductos().size()));
+        resumen.setStyle("-fx-font-weight: bold; -fx-padding: 8px;");
+
+        VBox layout = new VBox(10, formulario, resumen);
+        layout.setPadding(new Insets(10));
+        layout.setAlignment(Pos.CENTER);
+        VBox.setVgrow(formulario, Priority.ALWAYS);
 
         ventana.setScene(new Scene(layout, 700, 450));
         ventana.show();
@@ -434,7 +610,8 @@ public class TiendaUI extends Application {
         actualizarTablas();
     }
 
-    // ======================== PANEL DE TOTALES Y FINALIZAR ========================
+    // ======================== PANEL DE TOTALES Y FINALIZAR
+    // ========================
     private VBox crearPanelAcciones() {
         VBox panel = new VBox(15);
         panel.setPadding(new Insets(10));
@@ -444,10 +621,10 @@ public class TiendaUI extends Application {
         Label titulo = new Label("💰 TOTAL Y PAGO");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;");
 
-        labelSubtotal = new Label("$ 0.00");
-        labelDescuento = new Label("$ 0.00");
-        labelImpuesto = new Label("$ 0.00");
-        labelTotal = new Label("$ 0.00");
+        labelSubtotal = new Label("S/ 0.00");
+        labelDescuento = new Label("S/ 0.00");
+        labelImpuesto = new Label("S/ 0.00");
+        labelTotal = new Label("S/ 0.00");
         labelTotal.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
 
         GridPane resumen = new GridPane();
@@ -542,7 +719,8 @@ public class TiendaUI extends Application {
     private void aplicarFiltroInventario(String filtro) {
         String texto = filtro == null ? "" : filtro.trim().toLowerCase();
         productosFiltrados.setPredicate(producto -> {
-            if (texto.isEmpty()) return true;
+            if (texto.isEmpty())
+                return true;
             return producto.getId().toLowerCase().contains(texto)
                     || producto.getNombre().toLowerCase().contains(texto);
         });
@@ -557,10 +735,10 @@ public class TiendaUI extends Application {
 
     private void actualizarTotalesUI() {
         Totales totales = calcularTotales();
-        labelSubtotal.setText(String.format("$ %.2f", totales.subtotal));
-        labelDescuento.setText(String.format("$ %.2f", totales.descuento));
-        labelImpuesto.setText(String.format("$ %.2f", totales.impuesto));
-        labelTotal.setText(String.format("$ %.2f", totales.total));
+        labelSubtotal.setText(String.format("S/ %.2f", totales.subtotal));
+        labelDescuento.setText(String.format("S/ %.2f", totales.descuento));
+        labelImpuesto.setText(String.format("S/ %.2f", totales.impuesto));
+        labelTotal.setText(String.format("S/ %.2f", totales.total));
     }
 
     private Totales calcularTotales() {
@@ -599,9 +777,17 @@ public class TiendaUI extends Application {
             this.subtotal = subtotal;
         }
 
-        public com.lab04.propuestos.ej2_compras.Producto getProducto() { return producto; }
-        public int getCantidad() { return cantidad; }
-        public double getSubtotal() { return subtotal; }
+        public com.lab04.propuestos.ej2_compras.Producto getProducto() {
+            return producto;
+        }
+
+        public int getCantidad() {
+            return cantidad;
+        }
+
+        public double getSubtotal() {
+            return subtotal;
+        }
     }
 
     private static class Totales {
