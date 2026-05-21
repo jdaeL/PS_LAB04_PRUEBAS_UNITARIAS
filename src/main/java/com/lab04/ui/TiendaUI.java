@@ -1,6 +1,7 @@
 package com.lab04.ui;
 
 import com.lab04.propuestos.ej1_inventario.Inventario;
+import com.lab04.propuestos.ej1_inventario.Movimiento;
 import com.lab04.propuestos.ej1_inventario.Producto;
 import com.lab04.propuestos.ej2_compras.CarritoCompra;
 import com.lab04.propuestos.ej2_compras.ItemCarrito;
@@ -116,10 +117,11 @@ public class TiendaUI extends Application {
         // Botones de gestión de stock
         Button btnAgregarStock = new Button("➕ Agregar Stock");
         Button btnRetirarStock = new Button("➖ Retirar Stock");
+        Button btnVerMovimientos = new Button("📋 Ver Movimientos");
         btnAgregarStock.setOnAction(e -> gestionarStock(true));
         btnRetirarStock.setOnAction(e -> gestionarStock(false));
-
-        HBox botonesStock = new HBox(10, btnAgregarStock, btnRetirarStock);
+        btnVerMovimientos.setOnAction(e -> mostrarVentanaMovimientos());
+        HBox botonesStock = new HBox(10, btnAgregarStock, btnRetirarStock, btnVerMovimientos);
         botonesStock.setPadding(new Insets(5, 0, 5, 0));
 
         panel.getChildren().addAll(titulo, buscador, tablaInventario, botonesStock);
@@ -201,6 +203,59 @@ public class TiendaUI extends Application {
                 mostrarAlerta("Error: " + e.getMessage(), Alert.AlertType.ERROR);
             }
         });
+    }
+
+    private void mostrarVentanaMovimientos() {
+        Stage ventana = new Stage();
+        ventana.setTitle("📋 Historial de Movimientos del Inventario");
+
+        TableView<Movimiento> tabla = new TableView<>();
+
+        TableColumn<Movimiento, String> colFecha = new TableColumn<>("Fecha");
+        colFecha.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFecha().toString()));
+        colFecha.setPrefWidth(180);
+
+        TableColumn<Movimiento, String> colTipo = new TableColumn<>("Tipo");
+        colTipo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getTipo().name()));
+        colTipo.setPrefWidth(80);
+
+        TableColumn<Movimiento, String> colProd = new TableColumn<>("Producto ID");
+        colProd.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getProductoId()));
+        colProd.setPrefWidth(100);
+
+        TableColumn<Movimiento, Integer> colCant = new TableColumn<>("Cantidad");
+        colCant.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getCantidad()).asObject());
+        colCant.setPrefWidth(80);
+
+        TableColumn<Movimiento, String> colMotivo = new TableColumn<>("Motivo");
+        colMotivo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getMotivo()));
+
+        tabla.getColumns().addAll(colFecha, colTipo, colProd, colCant, colMotivo);
+        tabla.setItems(FXCollections.observableArrayList(inventario.getMovimientos()));
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        // Resaltar entradas en verde, salidas en rojo
+        tabla.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(Movimiento m, boolean empty) {
+                super.updateItem(m, empty);
+                if (m == null || empty) setStyle("");
+                else if (m.getTipo() == Movimiento.Tipo.ENTRADA) setStyle("-fx-background-color: #d4edda;");
+                else setStyle("-fx-background-color: #f8d7da;");
+            }
+        });
+
+        // Totales de entradas/salidas
+        Label resumen = new Label(String.format("Total entradas: %d  |  Total salidas: %d",
+                inventario.getTotalEntradas(), inventario.getTotalSalidas()));
+        resumen.setStyle("-fx-font-weight: bold; -fx-padding: 8px;");
+
+        VBox layout = new VBox(10, tabla, resumen);
+        layout.setPadding(new Insets(10));
+        VBox.setVgrow(tabla, Priority.ALWAYS);
+
+        ventana.setScene(new Scene(layout, 700, 450));
+        ventana.show();
     }
 
     // ======================== PANEL DEL CARRITO ========================
