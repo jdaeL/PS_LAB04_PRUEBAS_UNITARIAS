@@ -1,11 +1,17 @@
 package com.lab04.propuestos.ej2_compras;
 
-import com.lab04.propuestos.ej1_inventario.Inventario;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import com.lab04.propuestos.ej1_inventario.Inventario;
 
 public class CarritoCompra {
     private static final Logger log = LoggerFactory.getLogger(CarritoCompra.class);
@@ -112,13 +118,13 @@ public class CarritoCompra {
     public String obtenerResumenCompra() {
         StringBuilder sb = new StringBuilder("=== Resumen del carrito ===\n");
         for (ItemCarrito item : items) {
-            sb.append(String.format("%s x%d = %.2f\n",
+            sb.append(String.format(Locale.GERMANY, "%s x%d = %.2f\n",
                     item.getProducto().getNombre(),
                     item.getCantidad(),
                     item.getSubtotal()));
         }
         double total = calcularTotal();
-        sb.append(String.format("TOTAL: %.2f", total));
+        sb.append(String.format(Locale.GERMANY, "TOTAL: %.2f", total));
         return sb.toString();
     }
 
