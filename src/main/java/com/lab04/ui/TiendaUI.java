@@ -168,9 +168,8 @@ public class TiendaUI extends Application {
         // Listener para habilitar/deshabilitar botones según la selección
         tablaInventario.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             boolean haySeleccion = newVal != null;
-            btnRetirarStock.setDisable(!haySeleccion);
-            btnEliminarProducto.setDisable(!haySeleccion);
             btnAgregarStock.setDisable(!haySeleccion);
+            btnEliminarProducto.setDisable(!haySeleccion);
         });
         
         // Layout de botones centrado
