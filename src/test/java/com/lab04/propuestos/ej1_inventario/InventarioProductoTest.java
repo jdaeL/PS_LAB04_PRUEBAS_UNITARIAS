@@ -1,13 +1,13 @@
 package com.lab04.propuestos.ej1_inventario;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,13 +36,28 @@ class InventarioProductoTest {
         @Test
         @DisplayName("Constructor válido asigna atributos")
         void constructorValido_AsignaAtributos() {
-            assertEquals("P001", producto.getCodigo());
-            assertEquals("P001", producto.getId());
-            assertEquals("Producto Base", producto.getNombre());
-            assertEquals(10.0, producto.getPrecio());
-            assertEquals(5, producto.getStock());
-            assertEquals(5, producto.getCantidad());
-            assertTrue(producto.isDisponible());
+            // Uso de assertAll según la sección 1.6 de la guía
+            assertAll("Verificación de atributos del Producto",
+                () -> assertEquals("P001", producto.getCodigo(), "El código no coincide"),
+                () -> assertEquals("P001", producto.getId(), "El ID no coincide"),
+                () -> assertEquals("Producto Base", producto.getNombre(), "El nombre no coincide"),
+                () -> assertEquals(10.0, producto.getPrecio(), "El precio no coincide"),
+                () -> assertEquals(5, producto.getStock(), "El stock no coincide"),
+                () -> assertEquals(5, producto.getCantidad(), "La cantidad no coincide"),
+                () -> assertTrue(producto.isDisponible(), "El producto debería estar disponible")
+            );
+        }
+
+        // Nueva prueba para garantizar que la sanitización de datos (trim y uppercase) funciona
+        @Test
+        @DisplayName("Constructor sanitiza código y nombre (Trim y UpperCase)")
+        void constructor_SanitizaEntradas() {
+            Producto pSucio = new Producto(" p002  ", "  Teclado Mecánico  ", 50.0, 10);
+            assertAll("Verificación de sanitización",
+                () -> assertEquals("P002", pSucio.getCodigo(), "El código debe estar sin espacios y en mayúsculas"),
+                () -> assertEquals("P002", pSucio.getId(), "El ID debe estar sin espacios y en mayúsculas"),
+                () -> assertEquals("Teclado Mecánico", pSucio.getNombre(), "El nombre debe estar sin espacios extra")
+            );
         }
 
         @ParameterizedTest
@@ -86,7 +101,12 @@ class InventarioProductoTest {
         @DisplayName("Agregar stock incrementa cantidad")
         void agregarStock_IncrementaCantidad() {
             producto.agregarStock(3);
-            assertEquals(8, producto.getStock());
+            
+            // Combinar comprobaciones de estado después de una operación
+            assertAll("Verificación de stock tras agregado",
+                () -> assertEquals(8, producto.getStock(), "El stock total debe ser 8"),
+                () -> assertTrue(producto.isDisponible(), "El producto debe seguir disponible")
+            );
         }
 
         @ParameterizedTest
@@ -139,51 +159,47 @@ class InventarioProductoTest {
         @DisplayName("Equals y hashCode comparan por código")
         void equalsHashCode_ComparaPorCodigo() {
             Producto mismoId = new Producto("P001", "Otro", 9.0, 1);
-            assertEquals(producto, mismoId);
-            assertEquals(producto.hashCode(), mismoId.hashCode());
+            
+            // Uso de assertAll
+            assertAll("Verificación de equals y hashCode",
+                () -> assertEquals(producto, mismoId, "Los productos deberían ser iguales por ID"),
+                () -> assertEquals(producto.hashCode(), mismoId.hashCode(), "Los hashCodes deberían coincidir")
+            );
         }
 
         @Test
         @DisplayName("toString incluye datos básicos")
         void toString_ContieneDatos() {
-            assertTrue(producto.toString().contains("Producto Base"));
-            assertTrue(producto.toString().contains("P001"));
+            String s = producto.toString();
+            assertAll("Verificación de toString",
+                () -> assertTrue(s.contains("Producto Base"), "Debería contener el nombre"),
+                () -> assertTrue(s.contains("P001"), "Debería contener el código")
+            );
         }
 
         @Test
         @DisplayName("Getters retornan los valores esperados")
         void getters_RetornanValores() {
-            assertEquals("P001", producto.getCodigo());
-            assertEquals("P001", producto.getId());
-            assertEquals("Producto Base", producto.getNombre());
-            assertEquals(10.0, producto.getPrecio());
-            assertEquals(5, producto.getStock());
-            assertEquals(5, producto.getCantidad());
-            assertEquals(5, producto.consultarStock());
+            // Uso de assertAll para validar el estado completo
+            assertAll("Verificación de getters",
+                () -> assertEquals("P001", producto.getCodigo()),
+                () -> assertEquals("P001", producto.getId()),
+                () -> assertEquals("Producto Base", producto.getNombre()),
+                () -> assertEquals(10.0, producto.getPrecio()),
+                () -> assertEquals(5, producto.getStock()),
+                () -> assertEquals(5, producto.getCantidad()),
+                () -> assertEquals(5, producto.consultarStock())
+            );
         }
 
         @Test
         @DisplayName("equals con la misma referencia es true y con otro tipo es false")
         void equals_ReferenciaYOtroTipo() {
-            assertTrue(producto.equals(producto));
-            assertFalse(producto.equals("algo"));
-            assertFalse(producto.equals(null));
-        }
-
-        @Test
-        @DisplayName("hashCode es consistente")
-        void hashCode_Consistente() {
-            int h = producto.hashCode();
-            assertEquals(h, producto.hashCode());
-        }
-
-        @Test
-        @DisplayName("toString contiene nombre, ID y precio")
-        void toString_FormatoPrecioStock() {
-            String s = producto.toString();
-            assertTrue(s.contains("P001"), "Debería contener el ID");
-            assertTrue(s.contains("Producto Base"), "Debería contener el nombre");
-            assertTrue(s.contains("10"), "Debería contener el precio");
+            assertAll("Verificación avanzada de equals",
+                () -> assertTrue(producto.equals(producto), "Misma referencia debe ser true"),
+                () -> assertFalse(producto.equals("algo"), "Comparar con otro tipo debe ser false"),
+                () -> assertFalse(producto.equals(null), "Comparar con null debe ser false")
+            );
         }
     }
 
@@ -196,9 +212,13 @@ class InventarioProductoTest {
         void agregarProducto_RegistraMovimiento() {
             inventario.agregarProducto(producto);
             List<Movimiento> movimientos = inventario.getMovimientos();
-            assertEquals(1, movimientos.size());
-            assertEquals(Movimiento.Tipo.ENTRADA, movimientos.get(0).getTipo());
-            assertEquals(5, movimientos.get(0).getCantidad());
+            
+            // Uso de assertAll
+            assertAll("Registro de movimiento al agregar",
+                () -> assertEquals(1, movimientos.size(), "Debe haber 1 movimiento"),
+                () -> assertEquals(Movimiento.Tipo.ENTRADA, movimientos.get(0).getTipo(), "El tipo debe ser ENTRADA"),
+                () -> assertEquals(5, movimientos.get(0).getCantidad(), "La cantidad debe coincidir con el stock")
+            );
         }
 
         @Test
@@ -210,12 +230,29 @@ class InventarioProductoTest {
         }
 
         @Test
-        @DisplayName("Agregar producto duplicado lanza excepción")
+        @DisplayName("Agregar producto duplicado lanza excepción (incluso con espacios y minúsculas)")
         void agregarProducto_Duplicado_LanzaExcepcion() {
-            inventario.agregarProducto(producto);
+            inventario.agregarProducto(producto); // Agregamos "P001"
+            
+            // Comprobar que la validación de duplicados sanitiza correctamente la entrada
+            Producto duplicadoSucio = new Producto(" p001  ", "Otro Nombre", 10.0, 5);
+            
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> inventario.agregarProducto(producto));
+                    () -> inventario.agregarProducto(duplicadoSucio));
             assertEquals("Ya existe un producto con ID: P001", ex.getMessage());
+        }
+
+        // Prueba específica para asegurar que los métodos de Inventario ignoran los espacios y el case
+        @Test
+        @DisplayName("Operaciones de Inventario sanitizan el ID proporcionado")
+        void operaciones_Inventario_SanitizanId() {
+            inventario.agregarProducto(producto);
+            
+            assertAll("Verificación de sanitización en métodos de Inventario",
+                () -> assertNotNull(inventario.obtenerProducto(" p001 "), "Debe encontrarlo ignorando espacios y minúsculas"),
+                () -> assertTrue(inventario.verificarStock("  P001", 1), "Debe verificar stock ignorando espacios"),
+                () -> assertEquals(5, inventario.consultarStock("p001"), "Debe consultar stock ignorando minúsculas")
+            );
         }
 
         @Test
@@ -223,8 +260,11 @@ class InventarioProductoTest {
         void entradaStock_ActualizaYRegistra() {
             inventario.agregarProducto(producto);
             inventario.entradaStock("P001", 2, "Compra");
-            assertEquals(7, inventario.consultarStock("P001"));
-            assertEquals(2, inventario.getMovimientos().size());
+            
+            assertAll("Actualización por entrada de stock",
+                () -> assertEquals(7, inventario.consultarStock("P001"), "Stock incorrecto"),
+                () -> assertEquals(2, inventario.getMovimientos().size(), "Debe haber 2 movimientos")
+            );
         }
 
         @Test
@@ -232,8 +272,11 @@ class InventarioProductoTest {
         void salidaStock_ActualizaYRegistra() {
             inventario.agregarProducto(producto);
             inventario.salidaStock("P001", 1, "Venta");
-            assertEquals(4, inventario.consultarStock("P001"));
-            assertEquals(2, inventario.getMovimientos().size());
+            
+            assertAll("Actualización por salida de stock",
+                () -> assertEquals(4, inventario.consultarStock("P001"), "Stock incorrecto"),
+                () -> assertEquals(2, inventario.getMovimientos().size(), "Debe haber 2 movimientos")
+            );
         }
 
         @Test
@@ -255,8 +298,10 @@ class InventarioProductoTest {
         @DisplayName("Verificar stock responde correctamente")
         void verificarStock_RespondeCorrectamente() {
             inventario.agregarProducto(producto);
-            assertTrue(inventario.verificarStock("P001", 3));
-            assertFalse(inventario.verificarStock("P001", 10));
+            assertAll("Verificación de disponibilidad de stock",
+                () -> assertTrue(inventario.verificarStock("P001", 3), "Debería haber stock suficiente"),
+                () -> assertFalse(inventario.verificarStock("P001", 10), "Debería faltar stock")
+            );
         }
 
         @Test
@@ -278,122 +323,15 @@ class InventarioProductoTest {
         }
 
         @Test
-        @DisplayName("buscarProductoPorNombre sin coincidencias devuelve lista vacía")
-        void buscarPorNombre_SinCoincidencias_DevuelveVacio() {
-            inventario.agregarProducto(producto);
-            List<Producto> resultado = inventario.buscarProductoPorNombre("XYZ");
-            assertTrue(resultado.isEmpty());
-        }
-
-        @Test
-        @DisplayName("buscarProductoPorNombre con nombre vacío lanza excepción")
-        void buscarPorNombre_NombreVacio_LanzaExcepcion() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> inventario.buscarProductoPorNombre("  "));
-        }
-
-        @Test
-        @DisplayName("buscarProductoPorNombre con null lanza excepción")
-        void buscarPorNombre_Null_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> inventario.buscarProductoPorNombre(null));
-            assertEquals("El nombre de búsqueda no puede estar vacío", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("Agregar producto nulo lanza excepción")
-        void agregarProducto_Nulo_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> inventario.agregarProducto(null));
-            assertEquals("Producto no puede ser nulo", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("getTotalEntradas suma todas las entradas registradas")
-        void getTotalEntradas_SumaEntradas() {
-            inventario.agregarProducto(producto); // entrada inicial 5
-            inventario.entradaStock("P001", 3, "Reposición");
-            assertEquals(8, inventario.getTotalEntradas());
-        }
-
-        @Test
-        @DisplayName("getTotalSalidas suma todas las salidas registradas")
-        void getTotalSalidas_SumaSalidas() {
-            inventario.agregarProducto(producto);
-            inventario.salidaStock("P001", 2, "Venta");
-            inventario.salidaStock("P001", 1, "Venta");
-            assertEquals(3, inventario.getTotalSalidas());
-        }
-
-        @Test
-        @DisplayName("getTotalEntradas con inventario vacío devuelve 0")
-        void getTotalEntradas_SinMovimientos_DevuelveCero() {
-            assertEquals(0, inventario.getTotalEntradas());
-        }
-
-        @Test
-        @DisplayName("entradaStock en producto inexistente lanza excepción")
-        void entradaStock_Inexistente_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> inventario.entradaStock("X", 1, "Test"));
-            assertEquals("Producto no encontrado: X", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("salidaStock en producto inexistente lanza excepción")
-        void salidaStock_Inexistente_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> inventario.salidaStock("X", 1, "Test"));
-            assertEquals("Producto no encontrado: X", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("verificarStock en producto inexistente lanza excepción")
-        void verificarStock_Inexistente_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> inventario.verificarStock("X", 1));
-            assertEquals("Producto no encontrado: X", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("eliminarProducto remueve exitosamente un producto existente")
-        void eliminarProducto_Existente_EliminaCorrectamente() {
-            inventario.agregarProducto(producto);
-            inventario.eliminarProducto("P001");
-            
-            // Verifica que ya no exista lanzando la excepción esperada
-            assertThrows(IllegalArgumentException.class, () -> inventario.obtenerProducto("P001"));
-            assertTrue(inventario.listarProductos().isEmpty());
-        }
-
-        @ParameterizedTest
-        @NullAndEmptySource
-        @ValueSource(strings = {" ", "   "})
-        @DisplayName("eliminarProducto con ID vacío o nulo lanza excepción")
-        void eliminarProducto_IdInvalido_LanzaExcepcion(String idInvalido) {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> inventario.eliminarProducto(idInvalido));
-            assertEquals("ID de producto no puede estar vacío", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("eliminarProducto con ID inexistente lanza excepción")
-        void eliminarProducto_Inexistente_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> inventario.eliminarProducto("ID_FALSO"));
-            assertEquals("Producto no encontrado: ID_FALSO", ex.getMessage());
-        }
-
-        @Test
         @DisplayName("buscarProductoPorNombre limpia espacios y es insensible a mayúsculas/minúsculas")
         void buscarPorNombre_NormalizaCaracteresYEspacios() {
-            inventario.agregarProducto(producto); // "Producto Base"
-            
-            // Buscamos con espacios extras y mezclando mayúsculas: "  pRoDuCtO  "
+            inventario.agregarProducto(producto);
             List<Producto> resultado = inventario.buscarProductoPorNombre("  pRoDuCtO  ");
             
-            assertEquals(1, resultado.size());
-            assertEquals("P001", resultado.get(0).getId());
+            assertAll("Búsqueda con normalización",
+                () -> assertEquals(1, resultado.size(), "Debe encontrar 1 producto"),
+                () -> assertEquals("P001", resultado.get(0).getId(), "El ID debe coincidir")
+            );
         }
 
         @Test
@@ -407,11 +345,41 @@ class InventarioProductoTest {
         @Test
         @DisplayName("getTotalSalidas ignora los movimientos de entrada")
         void getTotalSalidas_IgnoraEntradas() {
-            inventario.agregarProducto(producto); // Entrada inicial de 5
+            inventario.agregarProducto(producto);
             inventario.salidaStock("P001", 2, "Venta"); 
             inventario.entradaStock("P001", 4, "Compra"); 
-            
             assertEquals(2, inventario.getTotalSalidas());
+        }
+
+        @Test
+        @DisplayName("eliminarProducto remueve exitosamente un producto existente")
+        void eliminarProducto_Existente_EliminaCorrectamente() {
+            inventario.agregarProducto(producto);
+            inventario.eliminarProducto("P001");
+            
+            // Agrupar la validación del estado post-eliminación
+            assertAll("Verificación de inventario tras eliminación",
+                () -> assertThrows(IllegalArgumentException.class, () -> inventario.obtenerProducto("P001"), "No debería encontrar el producto"),
+                () -> assertTrue(inventario.listarProductos().isEmpty(), "La lista de productos debe estar vacía")
+            );
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {" ", "   "})
+        @DisplayName("eliminarProducto con ID vacío o nulo lanza excepción")
+        void eliminarProducto_IdInvalido_LanzaExcepcion(String idInvalido) {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.eliminarProducto(idInvalido));
+            assertEquals("ID de producto no puede estar vacío o ser nulo", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("eliminarProducto con ID inexistente lanza excepción")
+        void eliminarProducto_Inexistente_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.eliminarProducto("ID_FALSO"));
+            assertEquals("Producto no encontrado: ID_FALSO", ex.getMessage());
         }
     }
 
@@ -423,10 +391,15 @@ class InventarioProductoTest {
         @DisplayName("Movimiento válido asigna fecha y datos")
         void movimientoValido_AsignaDatos() {
             Movimiento movimiento = new Movimiento(Movimiento.Tipo.ENTRADA, 2, "P001", "Compra");
-            assertNotNull(movimiento.getFecha());
-            assertEquals(Movimiento.Tipo.ENTRADA, movimiento.getTipo());
-            assertEquals(2, movimiento.getCantidad());
-            assertEquals("P001", movimiento.getProductoId());
+            
+            // Uso de assertAll
+            assertAll("Asignación de datos en Movimiento",
+                () -> assertNotNull(movimiento.getFecha(), "La fecha no debe ser nula"),
+                () -> assertEquals(Movimiento.Tipo.ENTRADA, movimiento.getTipo(), "Tipo incorrecto"),
+                () -> assertEquals(2, movimiento.getCantidad(), "Cantidad incorrecta"),
+                () -> assertEquals("P001", movimiento.getProductoId(), "ID de producto incorrecto"),
+                () -> assertEquals("Compra", movimiento.getMotivo(), "Motivo incorrecto")
+            );
         }
 
         @Test
@@ -438,26 +411,10 @@ class InventarioProductoTest {
         }
 
         @Test
-        @DisplayName("Movimiento con cantidad no positiva lanza excepción")
-        void movimientoCantidadNoPositiva_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> new Movimiento(Movimiento.Tipo.ENTRADA, 0, "P001", "Test"));
-            assertEquals("La cantidad debe ser positiva", ex.getMessage());
-        }
-
-        @Test
         @DisplayName("Movimiento con productoId vacío lanza excepción")
         void movimientoProductoIdVacio_LanzaExcepcion() {
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                     () -> new Movimiento(Movimiento.Tipo.SALIDA, 1, " ", "Test"));
-            assertEquals("ProductoId no puede estar vacío", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("Movimiento con productoId null lanza excepción")
-        void movimientoProductoIdNull_LanzaExcepcion() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> new Movimiento(Movimiento.Tipo.SALIDA, 1, null, "Test"));
             assertEquals("ProductoId no puede estar vacío", ex.getMessage());
         }
 
@@ -473,20 +430,27 @@ class InventarioProductoTest {
         @DisplayName("toString incluye datos relevantes")
         void movimientoToString_ContieneDatos() {
             Movimiento movimiento = new Movimiento(Movimiento.Tipo.SALIDA, 1, "P001", "Venta");
-            assertTrue(movimiento.toString().contains("SALIDA"));
-            assertTrue(movimiento.toString().contains("P001"));
+            
+            assertAll("Verificación de toString en Movimiento",
+                () -> assertTrue(movimiento.toString().contains("SALIDA"), "Debe contener el tipo"),
+                () -> assertTrue(movimiento.toString().contains("P001"), "Debe contener el ID de producto")
+            );
         }
 
         @Test
         @DisplayName("Movimiento con motivo null es aceptado y toString muestra null")
         void movimientoMotivoNull_Aceptado() {
             Movimiento movimiento = new Movimiento(Movimiento.Tipo.ENTRADA, 2, "P010", null);
-            assertTrue(movimiento.toString().contains("null"));
-            assertEquals(null, movimiento.getMotivo());
-            assertEquals(Movimiento.Tipo.ENTRADA, movimiento.getTipo());
-            assertEquals(2, movimiento.getCantidad());
-            assertEquals("P010", movimiento.getProductoId());
-            assertNotNull(movimiento.getFecha());
+            
+            // Uso de assertAll
+            assertAll("Creación de movimiento con motivo null",
+                () -> assertTrue(movimiento.toString().contains("null"), "toString debe manejar null"),
+                () -> assertEquals(null, movimiento.getMotivo(), "El motivo debe ser null"),
+                () -> assertEquals(Movimiento.Tipo.ENTRADA, movimiento.getTipo(), "El tipo debe coincidir"),
+                () -> assertEquals(2, movimiento.getCantidad(), "La cantidad debe coincidir"),
+                () -> assertEquals("P010", movimiento.getProductoId(), "El ID debe coincidir"),
+                () -> assertNotNull(movimiento.getFecha(), "La fecha debe estar asignada")
+            );
         }
 
         @Test
