@@ -208,6 +208,14 @@ class InventarioProductoTest {
     class InventarioTests {
 
         @Test
+        @DisplayName("Agregar producto nulo lanza excepción")
+        void agregarProducto_Nulo_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.agregarProducto(null));
+            assertEquals("Producto no puede ser nulo", ex.getMessage());
+        }
+
+        @Test
         @DisplayName("Agregar producto registra movimiento de entrada")
         void agregarProducto_RegistraMovimiento() {
             inventario.agregarProducto(producto);
@@ -320,6 +328,16 @@ class InventarioProductoTest {
             inventario.agregarProducto(new Producto("P002", "Producto Extra", 5.0, 2));
             List<Producto> resultado = inventario.buscarProductoPorNombre("Producto");
             assertEquals(2, resultado.size());
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {" ", "   "})
+        @DisplayName("buscarProductoPorNombre con texto vacío lanza excepción")
+        void buscarPorNombre_Vacio_LanzaExcepcion(String nombre) {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> inventario.buscarProductoPorNombre(nombre));
+            assertEquals("El nombre de búsqueda no puede estar vacío", ex.getMessage());
         }
 
         @Test
