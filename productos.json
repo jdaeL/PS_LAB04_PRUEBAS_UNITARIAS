@@ -15,7 +15,7 @@
     "codigo": "P007",
     "nombre": "Laptop Gamer MSI",
     "precio": 6700.0,
-    "stock": 2
+    "stock": 1
   },
   {
     "codigo": "P006",
@@ -40,11 +40,5 @@
     "nombre": "Mouse Óptico",
     "precio": 25.0,
     "stock": 10
-  },
-  {
-    "codigo": "P008",
-    "nombre": "Laptop Lenovo",
-    "precio": 1200.0,
-    "stock": 23
   }
 ]

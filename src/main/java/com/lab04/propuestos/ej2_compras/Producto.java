@@ -1,5 +1,7 @@
 package com.lab04.propuestos.ej2_compras;
 
+import java.math.BigDecimal;
+
 public class Producto {
     private final String id;
     private final String nombre;
@@ -13,6 +15,8 @@ public class Producto {
             throw new IllegalArgumentException("Nombre no puede estar vacío");
         if (precio <= 0)
             throw new IllegalArgumentException("El precio debe ser positivo");
+        if (!tieneMaximoDosDecimales(precio))
+            throw new IllegalArgumentException("El precio debe tener máximo 2 decimales");
         this.id = id;
         this.nombre = nombre;
         this.precio = precio;
@@ -39,5 +43,10 @@ public class Producto {
     @Override
     public String toString() {
         return String.format("%s (%s) - $%.2f - Disponible: %s", nombre, id, precio, disponible);
+    }
+
+    private boolean tieneMaximoDosDecimales(double valor) {
+        BigDecimal bd = BigDecimal.valueOf(valor);
+        return bd.scale() <= 2;
     }
 }

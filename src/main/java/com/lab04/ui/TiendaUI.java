@@ -23,6 +23,9 @@ import javafx.geometry.Pos;
 import javafx.stage.Stage;
 import javafx.beans.binding.Bindings;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -240,15 +243,13 @@ public class TiendaUI extends Application {
             @Override
             protected void updateItem(Producto item, boolean empty) {
                 super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setStyle("");
-                } else if (item.getStock() == 0) {
-                    setStyle("-fx-background-color: #f5c6cb;"); // rojo claro
-                } else if (item.getStock() <= 1) {
-                    setStyle("-fx-background-color: #fff3cd;"); // amarillo advertencia
-                } else {
-                    setStyle("");
-                }
+                aplicarEstiloFilaInventario(this, item, empty);
+            }
+
+            @Override
+            public void updateSelected(boolean selected) {
+                super.updateSelected(selected);
+                aplicarEstiloFilaInventario(this, getItem(), isEmpty());
             }
         });
     }
@@ -403,7 +404,7 @@ public class TiendaUI extends Application {
         Label lblPrecio = new Label("Precio (S/):");
         lblPrecio.setStyle("-fx-font-weight: bold;");
         TextField txtPrecio = new TextField();
-        txtPrecio.setPromptText("Ej: 59.99");
+        txtPrecio.setPromptText("Ej: 59.99 (máx. 2 decimales)");
         txtPrecio.setPrefWidth(250);
 
         Label lblStock = new Label("Stock Inicial:");
@@ -413,6 +414,8 @@ public class TiendaUI extends Application {
         txtStock.setPrefWidth(250);
 
         Label lblMensaje = new Label();
+        lblMensaje.setWrapText(true);
+        lblMensaje.setMaxWidth(520);
         lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
 
         formulario.add(lblTitulo, 0, 0, 2, 1);
@@ -442,8 +445,7 @@ public class TiendaUI extends Application {
             txtNombre.clear();
             txtPrecio.clear();
             txtStock.clear();
-            lblMensaje.setText("");
-            lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+            limpiarMensaje(lblMensaje);
         });
 
         btnCerrar.setOnAction(e -> ventana.close());
@@ -454,92 +456,87 @@ public class TiendaUI extends Application {
             String precioStr = txtPrecio.getText().trim();
             String stockStr = txtStock.getText().trim();
 
-            if (id.isEmpty() || nombre.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty()) {
-                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                lblMensaje.setText("⚠️ Todos los campos son obligatorios.");
-                return;
+            List<String> errores = new ArrayList<>();
+
+            if (id.isEmpty()) {
+                errores.add("El código (ID) es obligatorio.");
+            } else if (!id.matches("^P\\d{3}$")) {
+                errores.add("El ID debe tener el formato P + 3 dígitos (Ej: P006).");
+            }
+            String idNormalizado = id.toUpperCase();
+            if (!id.isEmpty() && inventario.listarProductos().stream()
+                    .anyMatch(p -> p.getId().equalsIgnoreCase(idNormalizado))) {
+                errores.add("Ya existe un producto con el ID '" + idNormalizado + "'.");
             }
 
-            if (!id.matches("^P\\d{3}$")) {
-                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                lblMensaje.setText("⚠️ El ID debe tener el formato P + 3 dígitos (Ej: P006).");
-                txtId.requestFocus();
-                return;
+            if (nombre.isEmpty()) {
+                errores.add("El nombre es obligatorio.");
+            } else if (inventario.listarProductos().stream()
+                    .anyMatch(p -> p.getNombre().equalsIgnoreCase(nombre))) {
+                errores.add("Ya existe un producto con el nombre '" + nombre + "'.");
             }
 
-            boolean idDuplicado = inventario.listarProductos().stream()
-                .anyMatch(p -> p.getId().equalsIgnoreCase(id));
-            if (idDuplicado) {
-                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                lblMensaje.setText("⚠️ Ya existe un producto con el ID '" + id + "'.");
-                txtId.requestFocus();
-                return;
-            }
-            boolean nombreDuplicado = inventario.listarProductos().stream()
-                    .anyMatch(p -> p.getNombre().equalsIgnoreCase(nombre));
-            if (nombreDuplicado) {
-                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                lblMensaje.setText("⚠️ Ya existe un producto con el nombre '" + nombre + "'.");
-                txtNombre.requestFocus();
-                return;
-            }
-            try {
-                double precio;
+            BigDecimal precioDecimal = null;
+            if (precioStr.isEmpty()) {
+                errores.add("El precio es obligatorio.");
+            } else {
                 try {
-                    precio = Double.parseDouble(precioStr);
+                    precioDecimal = new BigDecimal(precioStr);
                 } catch (NumberFormatException ex) {
-                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                    lblMensaje.setText("⚠️ El precio debe ser un número válido (Ej: 59.99).");
-                    txtPrecio.requestFocus();
-                    return;
+                    errores.add("El precio debe ser un número válido (Ej: 59.99).");
                 }
+            }
+            if (precioDecimal != null) {
+                if (precioDecimal.scale() > 2) {
+                    errores.add("El precio debe tener máximo 2 decimales.");
+                }
+                if (precioDecimal.compareTo(BigDecimal.ZERO) <= 0) {
+                    errores.add("El precio debe ser positivo.");
+                }
+            }
 
-                int stock;
+            Integer stock = null;
+            if (stockStr.isEmpty()) {
+                errores.add("El stock es obligatorio.");
+            } else {
                 try {
                     stock = Integer.parseInt(stockStr);
                 } catch (NumberFormatException ex) {
-                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                    lblMensaje.setText("⚠️ El stock debe ser un número entero (sin decimales).");
-                    txtStock.requestFocus();
-                    return;
+                    errores.add("El stock debe ser un número entero (sin decimales).");
                 }
+            }
+            if (stock != null && stock < 0) {
+                errores.add("El stock no puede ser negativo.");
+            }
 
-                // Validar que el precio sea positivo
-                if (precio <= 0) {
-                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                    lblMensaje.setText("⚠️ El precio debe ser positivo.");
-                    txtPrecio.requestFocus();
-                    return;
-                }
+            if (!errores.isEmpty()) {
+                mostrarErrores(lblMensaje, errores);
+                return;
+            }
 
-                // Validar que el stock inicial sea no-negativo
-                if (stock < 0) {
-                    lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                    lblMensaje.setText("⚠️ El stock no puede ser negativo.");
-                    txtStock.requestFocus();
-                    return;
-                }
+            double precio = precioDecimal.doubleValue();
+            int stockInicial = stock;
 
-                // Diálogo de confirmación
-                Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmacion.setTitle("Confirmar creación");
-                confirmacion.setHeaderText("¿Desea crear el siguiente producto?");
-                confirmacion.setContentText(String.format(
-                        "Código: %s\nNombre: %s\nPrecio: S/ %.2f\nStock Inicial: %d",
-                        id, nombre, precio, stock));
+            // Diálogo de confirmación
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("Confirmar creación");
+            confirmacion.setHeaderText("¿Desea crear el siguiente producto?");
+            confirmacion.setContentText(String.format(
+                    "Código: %s\nNombre: %s\nPrecio: S/ %.2f\nStock Inicial: %d",
+                    idNormalizado, nombre, precio, stockInicial));
 
-                Optional<ButtonType> resultado = confirmacion.showAndWait();
-                if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
-                    return;
-                }
+            Optional<ButtonType> resultado = confirmacion.showAndWait();
+            if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+                return;
+            }
 
-                Producto nuevoProducto = new Producto(id, nombre, precio, stock);
+            try {
+                Producto nuevoProducto = new Producto(idNormalizado, nombre, precio, stockInicial);
                 inventario.agregarProducto(nuevoProducto);
                 actualizarTablas();
                 PersistenciaInventario.guardar(inventario);
 
-                lblMensaje.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                lblMensaje.setText("✅ Producto '" + nombre + "' creado exitosamente.");
+                mostrarExito(lblMensaje, "✅ Producto '" + nombre + "' creado exitosamente.");
 
                 // Limpiar campos para siguiente producto
                 txtId.clear();
@@ -548,8 +545,7 @@ public class TiendaUI extends Application {
                 txtStock.clear();
                 txtId.requestFocus();
             } catch (IllegalArgumentException ex) {
-                lblMensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                lblMensaje.setText("⚠️ " + ex.getMessage());
+                mostrarErrores(lblMensaje, List.of(ex.getMessage()));
             }
         });
 
@@ -729,7 +725,8 @@ public class TiendaUI extends Application {
         VBox panel = new VBox(15);
         panel.setPadding(new Insets(10));
         panel.setStyle("-fx-border-color: #e67e22; -fx-border-width: 2; -fx-background-color: white;");
-        panel.setPrefWidth(250);
+        panel.setPrefWidth(380);
+        panel.setMinWidth(360);
 
         Label titulo = new Label("💰 TOTAL Y PAGO");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;");
@@ -739,14 +736,37 @@ public class TiendaUI extends Application {
         labelImpuesto = new Label("S/ 0.00");
         labelTotal = new Label("S/ 0.00");
         labelTotal.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+        labelSubtotal.setAlignment(Pos.CENTER_RIGHT);
+        labelDescuento.setAlignment(Pos.CENTER_RIGHT);
+        labelImpuesto.setAlignment(Pos.CENTER_RIGHT);
+        labelTotal.setAlignment(Pos.CENTER_RIGHT);
+        labelSubtotal.setMaxWidth(Double.MAX_VALUE);
+        labelDescuento.setMaxWidth(Double.MAX_VALUE);
+        labelImpuesto.setMaxWidth(Double.MAX_VALUE);
+        labelTotal.setMaxWidth(Double.MAX_VALUE);
 
         GridPane resumen = new GridPane();
         resumen.setHgap(10);
         resumen.setVgap(8);
-        resumen.addRow(0, new Label("Subtotal:"), labelSubtotal);
-        resumen.addRow(1, new Label("Descuento:"), labelDescuento);
-        resumen.addRow(2, new Label("Impuesto:"), labelImpuesto);
-        resumen.addRow(3, new Label("Total:"), labelTotal);
+        resumen.setMaxWidth(Double.MAX_VALUE);
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(45);
+        col1.setHgrow(Priority.ALWAYS);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(55);
+        col2.setHgrow(Priority.ALWAYS);
+        resumen.getColumnConstraints().addAll(col1, col2);
+
+        Label lblSubtotalTitulo = new Label("Subtotal:");
+        Label lblDescuentoTitulo = new Label("Descuento (10% > S/ 500):");
+        lblDescuentoTitulo.setWrapText(true);
+        Label lblImpuestoTitulo = new Label("Impuesto (19%):");
+        Label lblTotalTitulo = new Label("Total:");
+
+        resumen.addRow(0, lblSubtotalTitulo, labelSubtotal);
+        resumen.addRow(1, lblDescuentoTitulo, labelDescuento);
+        resumen.addRow(2, lblImpuestoTitulo, labelImpuesto);
+        resumen.addRow(3, lblTotalTitulo, labelTotal);
 
         btnCalcularTotal = new Button("🧮 Calcular total");
         btnFinalizarCompra = new Button("✅ Finalizar compra");
@@ -876,6 +896,48 @@ public class TiendaUI extends Application {
             btnActualizarCantidad.setDisable(seleccionado == null);
             btnRemover.setDisable(seleccionado == null);
         }
+    }
+
+    private void aplicarEstiloFilaInventario(TableRow<Producto> row, Producto item, boolean empty) {
+        if (empty || item == null) {
+            row.setStyle("");
+            return;
+        }
+        boolean selected = row.isSelected();
+        if (item.getStock() == 0) {
+            row.setStyle(selected
+                    ? "-fx-background-color: #f1b0b7; -fx-text-fill: #212529;"
+                    : "-fx-background-color: #f5c6cb; -fx-text-fill: #212529;");
+        } else if (item.getStock() <= 1) {
+            row.setStyle(selected
+                    ? "-fx-background-color: #ffe39f; -fx-text-fill: #212529;"
+                    : "-fx-background-color: #fff3cd; -fx-text-fill: #212529;");
+        } else {
+            row.setStyle("");
+        }
+    }
+
+    private void mostrarErrores(Label label, List<String> errores) {
+        StringBuilder sb = new StringBuilder("⚠️ Corrige los siguientes errores:\n");
+        for (String error : errores) {
+            sb.append("• ").append(error).append('\n');
+        }
+        label.setText(sb.toString().trim());
+        label.setStyle("-fx-text-fill: #721c24; -fx-background-color: #f8d7da; "
+                + "-fx-border-color: #f5c6cb; -fx-padding: 8; -fx-background-radius: 6; "
+                + "-fx-border-radius: 6; -fx-font-weight: bold;");
+    }
+
+    private void mostrarExito(Label label, String mensaje) {
+        label.setText(mensaje);
+        label.setStyle("-fx-text-fill: #155724; -fx-background-color: #d4edda; "
+                + "-fx-border-color: #c3e6cb; -fx-padding: 8; -fx-background-radius: 6; "
+                + "-fx-border-radius: 6; -fx-font-weight: bold;");
+    }
+
+    private void limpiarMensaje(Label label) {
+        label.setText("");
+        label.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
     }
 
     // Clase auxiliar para mostrar datos del carrito en la tabla

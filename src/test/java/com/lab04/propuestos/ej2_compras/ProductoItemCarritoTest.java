@@ -38,6 +38,14 @@ class ProductoItemCarritoTest {
     }
 
     @Test
+    @DisplayName("Producto con más de 2 decimales lanza excepción")
+    void productoPrecioConMuchosDecimales_LanzaExcepcion() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new Producto("P01", "Nombre", 3.14159, true));
+        assertEquals("El precio debe tener máximo 2 decimales", ex.getMessage());
+    }
+
+    @Test
     @DisplayName("Disponibilidad del producto puede actualizarse")
     void productoSetDisponible_ActualizaEstado() {
         producto.setDisponible(false);

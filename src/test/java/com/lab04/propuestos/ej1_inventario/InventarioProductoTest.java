@@ -90,6 +90,14 @@ class InventarioProductoTest {
         }
 
         @Test
+        @DisplayName("Precio con más de 2 decimales lanza excepción")
+        void constructorPrecioConMuchosDecimales_LanzaExcepcion() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> new Producto("P200", "Nombre", 1.234, 1));
+            assertEquals("El precio debe tener máximo 2 decimales", ex.getMessage());
+        }
+
+        @Test
         @DisplayName("Stock inicial negativo lanza excepción")
         void constructorStockNegativo_LanzaExcepcion() {
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,

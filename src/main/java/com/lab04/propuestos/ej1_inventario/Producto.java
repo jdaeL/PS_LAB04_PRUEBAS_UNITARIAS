@@ -1,5 +1,6 @@
 package com.lab04.propuestos.ej1_inventario;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 public class Producto {
@@ -15,6 +16,8 @@ public class Producto {
             throw new IllegalArgumentException("Nombre no puede estar vacío");
         if (precio <= 0)
             throw new IllegalArgumentException("El precio debe ser positivo");
+        if (!tieneMaximoDosDecimales(precio))
+            throw new IllegalArgumentException("El precio debe tener máximo 2 decimales");
         if (stockInicial < 0)
             throw new IllegalArgumentException("El stock inicial no puede ser negativo");
         
@@ -61,6 +64,11 @@ public class Producto {
 
     public boolean isDisponible() {
         return stock > 0;
+    }
+
+    private boolean tieneMaximoDosDecimales(double valor) {
+        BigDecimal bd = BigDecimal.valueOf(valor);
+        return bd.scale() <= 2;
     }
 
     @Override
